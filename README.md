@@ -9,6 +9,7 @@
 - [ ] Display two surfaces at the same time
 - [ ] Comments on the code
 ### Simone
+- [x] Explain git to anselme
 - [ ] Detect boundaries of open surfaces
 - [ ] Apply a flow to a surface
 - [ ] Tau adjustments
