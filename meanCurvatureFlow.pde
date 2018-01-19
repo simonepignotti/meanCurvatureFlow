@@ -2,14 +2,14 @@ int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 float distance = 2;  // for camera
-float tau = 0.1;
+float tau = 0.5;
 float volBefore;
 float volAfter;
 boolean first = true;
 Surface S;
 
 void setup() {
-  size(500, 500, P3D);
+  size(2000, 2000, P3D);
   S = new Surface("mug.txt");
 }
 
@@ -29,9 +29,9 @@ void draw() {
   }
 
   S.drawSurface();
-  S.harmonicFlow(tau);
+  //S.harmonicFlow(tau);
   //S.harmonicAreaFlow(tau);
-  //S.meanCurvatureFlow(tau);
+  S.meanCurvatureFlow(tau);
 }
 
 void mouseWheel(MouseEvent event) {  // for zooming in and out
