@@ -15,7 +15,7 @@ class Surface {
   int nF;   // number of vertices, edges and faces
   ArrayList<PVector> positions = new ArrayList<PVector>();
   ArrayList<Face> faces = new ArrayList<Face>();
-  boolean[][] incidenceVF = new boolean[nVmax][nFmax]; // true iff v is in f 
+  boolean[][] incidenceVF = new boolean[nVmax][nFmax]; // true iff v is in f
   boolean[][] adjacency = new boolean[nVmax][nVmax]; // true iff v1 ~ v2
   //boolean[][][] tensorEF = new boolean[nVmax][nVmax][nFmax]; // true iff v1~v2 is in f
   PVector[][] edgeCross = new PVector[nVmax][nVmax]; // cross product p[i] x p[j] for each j > i
@@ -36,7 +36,7 @@ class Surface {
 
   Surface(String filename) {
     String[] lines = loadStrings(filename);  // in data folder
-  
+
     /* // sample PLY file for testing
     String[] lines = {"ply", "element vertex 8", "element face 6","end_header",
     "-1 -1 -1",
@@ -47,7 +47,7 @@ class Surface {
     "1 -1 1 ",
     "1 1 1 ",
     "-1 1 1",
-    "4 0 1 2 3", 
+    "4 0 1 2 3",
     "4 5 4 7 6 ",
     "4 6 2 1 5 ",
     "4 3 7 4 0 ",
@@ -55,7 +55,7 @@ class Surface {
     "4 5 1 0 4 "
     };
     */
-    
+
     // cleans the matrices first
     for(int i=0; i<nVmax; i++) {
       for(int j=0;j<nFmax;j++) {
@@ -68,12 +68,12 @@ class Surface {
         //}
       }
     }
-    
+
     boolean end_header = false;
     String plyTest = "ply";
     if (!lines[0].equals(plyTest)) exit();
-    float scalingFactor = width/2;  // assumes coordinates in the PLY file are in [-1,1] 
-    
+    float scalingFactor = width/2;  // assumes coordinates in the PLY file are in [-1,1]
+
     int i = 0; // line currently read in the PLY file
     while (!end_header) {
       String[] keywords = split(lines[i], ' ');
@@ -89,18 +89,18 @@ class Surface {
       i++;
     }
     println("v=", this.nV, " f=", this.nF);
-  
+
     // Vertex' 3D coordinates
     for (int j = 0; j < this.nV; j++) {
       String[] keywords = split(lines[i], ' ');
       //println("lines[] " + i + " : " + lines[i]);
       //println("keywords: " + keywords.length);
-      this.positions.add(new PVector(scalingFactor*float(keywords[0]), 
+      this.positions.add(new PVector(scalingFactor*float(keywords[0]),
         scalingFactor*float(keywords[1]), scalingFactor*float(keywords[2])));
       i++;    // increase line number
     }
-    
-    // faces' indexes 
+
+    // faces' indexes
     for(int j=0; j< this.nF; j++) {
       String[] keywords = split(lines[i], ' ');
       ArrayList<Integer> indexes = new ArrayList<Integer>();
@@ -135,9 +135,9 @@ class Surface {
         }
       }
     }
-    
+
   }
- 
+
   //void rescaling (float r){
   //  for(int i=0; i<nV; i++) {
   //    positions.get(i).mult(r);
@@ -158,11 +158,11 @@ class Surface {
     }
     return v/6;
   }
-  //return true if Pi is a boundary point  
+  //return true if Pi is a boundary point
   boolean boundaryPoint(int i ){
     boolean boundary = true;
-    int nhbr=0; //number of nieghboring points 
-    int vf=0; // number of faces 
+    int nhbr=0; //number of nieghboring points
+    int vf=0; // number of faces
     for (int j=0; j<nV; j++) {
       if(adjacency[i][j])
          nhbr++;
@@ -175,48 +175,30 @@ class Surface {
        boundary = false;
     return boundary;
   }
-  
+
   PVector[] gradient() {
     PVector[] gradients_list = new PVector[nV];
     for (int i=0; i<nV; i++) {
       gradients_list[i] = new PVector(0,0,0);
     }
-    //for (int fi=0; fi<nF; fi++) {
-    //  for (int i=0; i<nV; i++) {
-    //    for (int j=0; j<nV; j++) {
-    //      for (int k=0; k<nV; k++) {
-    //        if (i!=j && i!=k && j!=k && tensorEF[j][k][fi]) {
-    //            gradients_list[i].add(this.edgeCross[j][k]);
-    //        }
-    //      }
-    //    }
-    //  }
-    //}
-    for (Face f:faces) {
-      int degree = f.vertices.size();
-      for (int i=0; i<degree; i++) {
-        for (int j=1; j<degree-1; j++) {
-          int pi = (i+j)%degree;
-          int pip1 = (i+j+1)%degree;
-          gradients_list[f.vertices.get(i)].add(this.edgeCross[f.vertices.get(pi)][f.vertices.get(pip1)]);
+    for (int i = 0; i < nV; i++) {
+      for (int f = 0; f < nF; f++) {
+        if (incidenceVF[i][f]) {
+          Face face = faces.get(f);
+          int idx = face.vertices.indexOf(i);
+          int degree = face.vertices.size();
+          for (int j=1; j<degree-1; j++) {
+            PVector pi = positions.get(face.vertices.get((idx+j)%degree));
+            PVector pip1 = positions.get(face.vertices.get((idx+j+1)%degree));
+            gradients_list[i].add(pi.cross(pip1));
+          }
         }
       }
     }
-    //    for (int j:f.vertices) {
-    //      for (int k:f.vertices) {
-    //        if (i!=j && i!=k && j!=k && adjacency[j][k]) {
-    //          println(i,j,k);
-    //          println(edgeCross[j][k]);
-    //          gradients_list[i].add(this.edgeCross[j][k]);
-    //        }
-    //      }
-    //    }
-    //  }
-    //}
     return gradients_list;
   }
-  
-   void harmonicFlow(float tau) {
+
+  void harmonicFlow(float tau) {
     ArrayList<PVector> hf = new ArrayList<PVector>();
     PVector h = new PVector(0,0,0);
     volBefore = this.volume();
@@ -246,7 +228,7 @@ class Surface {
       positions.get(i).mult(ratio);
     }
   }
-   //harmonic flow divided by the area  
+   //harmonic flow divided by the area
    void harmonicAreaFlow(float tau) {
     ArrayList<PVector> hf = new ArrayList<PVector>();
     ArrayList<PVector> niebors = new ArrayList<PVector>();
@@ -278,7 +260,7 @@ class Surface {
       positions.get(i).add(hf.get(i).mult(tau));
     }
   }
-  
+
   void volumeConservationFlow(float tau) {
     PVector[] hf = new PVector[nV];
     PVector h = new PVector(0,0,0);
@@ -302,7 +284,7 @@ class Surface {
       dot += hf[i].dot(gradient[i]);
       norm += gradient[i].dot(gradient[i]);
     }
-    
+
     }
     //println(dot);
     //println(norm);
@@ -323,7 +305,7 @@ class Surface {
       }
     }
   }
-  
+
   void meanCurvatureFlow(float tau) {
     PVector[] mcf = new PVector[nV];
     //int neighbor = -1;
@@ -332,7 +314,7 @@ class Surface {
       mcf[i] = new PVector(0,0,0);
       //if(!boundaryPoint(i)){
       int f = 0;
-      //find the initial face to start from 
+      //find the initial face to start from
       while (!found) {
         if (incidenceVF[i][f]) found = true;
         else f++;
@@ -361,7 +343,7 @@ class Surface {
         angleAfter += 2*PI;
       else if (angleAfter > PI)
         angleAfter -= 2*PI;
-      Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);  
+      Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);
       Mi.mult(Ai);
       mcf[i].sub(Mi);
       int prevFace = f;
@@ -393,11 +375,11 @@ class Surface {
           angleAfter += 2*PI;
         else if (angleAfter > PI)
           angleAfter -= 2*PI;
-        Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);  
+        Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);
         //println(Ai);
         Mi.mult(Ai);
         mcf[i].sub(Mi);
-        
+
       }
     //}
     }
@@ -416,7 +398,7 @@ void squarMeanCurvatureFlow(float tau) {
       mcf[i] = new PVector(0,0,0);
       if(!boundaryPoint(i)){
       int f = 0;
-      //find the initial face to start from 
+      //find the initial face to start from
       while (!found) {
         if (incidenceVF[i][f]) found = true;
         else f++;
@@ -441,7 +423,7 @@ void squarMeanCurvatureFlow(float tau) {
         angleAfter += 2*PI;
       else if (angleAfter > PI)
         angleAfter -= 2*PI;
-      Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);  
+      Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);
       Mi.mult(Ai);
       mcf[i].sub(Mi);
       int prevFace = f;
@@ -472,10 +454,10 @@ void squarMeanCurvatureFlow(float tau) {
           angleAfter += 2*PI;
         else if (angleAfter > PI)
           angleAfter -= 2*PI;
-        Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);  
+        Ai = 1/tan(angleBefore)+ 1/tan(angleAfter);
         Mi.mult(Ai);
         mcf[i].sub(Mi);
-        
+
       }
     }
     }

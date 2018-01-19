@@ -10,12 +10,12 @@ Surface S;
 
 void setup() {
   size(500, 500, P3D);
-  S = new Surface("cube.txt");
+  S = new Surface("mug.txt");
 }
 
 void draw() {
   background(50);
-  camera(distance*width/2.0, distance*height/2.0, distance*(height/2.0) / tan(PI*30.0 / 180.0), 
+  camera(distance*width/2.0, distance*height/2.0, distance*(height/2.0) / tan(PI*30.0 / 180.0),
   width/2.0, height/2.0, 0, 0, 1, 0);
   translate(width/2, height/2, 0);
   rotateX(TWO_PI*mouseY/width);
@@ -27,11 +27,11 @@ void draw() {
   if (first) {
     first = false;
   }
-  
+
   S.drawSurface();
-  //S.harmonicFlow(tau);
+  S.harmonicFlow(tau);
   //S.harmonicAreaFlow(tau);
-  S.meanCurvatureFlow(tau);
+  //S.meanCurvatureFlow(tau);
 }
 
 void mouseWheel(MouseEvent event) {  // for zooming in and out
