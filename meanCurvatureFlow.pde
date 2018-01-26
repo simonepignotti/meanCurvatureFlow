@@ -9,8 +9,8 @@ boolean first = true;
 Surface S;
 
 void setup() {
-  size(500, 500, P3D);
-  S = new Surface("mug.txt");
+  size(1500, 1500, P3D);
+  S = new Surface("cube.txt");
 }
 
 void draw() {
@@ -31,8 +31,8 @@ void draw() {
   S.drawSurface();
   //S.harmonicFlow(tau);
   //S.harmonicAreaFlow(tau);
-  //S.meanCurvatureFlow(tau);
-  S.volumeConservationFlow();
+  S.meanCurvatureFlow(tau);
+  //S.volumeConservationFlow();
 
 }
 
