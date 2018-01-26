@@ -15,7 +15,7 @@ class Surface {
   int nF;   // number of vertices, edges and faces
   ArrayList<PVector> positions = new ArrayList<PVector>();
   ArrayList<Face> faces = new ArrayList<Face>();
-  boolean[][] incidenceVF = new boolean[nVmax][nFmax]; // true iff v is in f 
+  boolean[][] incidenceVF = new boolean[nVmax][nFmax]; // true iff v is in f
   boolean[][] adjacency = new boolean[nVmax][nVmax]; // true iff v1 ~ v2
   //boolean[][][] tensorEF = new boolean[nVmax][nVmax][nFmax]; // true iff v1~v2 is in f
   PVector[][] edgeCross = new PVector[nVmax][nVmax]; // cross product p[i] x p[j] for each j > i
@@ -36,7 +36,7 @@ class Surface {
 
   Surface(String filename) {
     String[] lines = loadStrings(filename);  // in data folder
-  
+
     /* // sample PLY file for testing
     String[] lines = {"ply", "element vertex 8", "element face 6","end_header",
     "-1 -1 -1",
@@ -47,7 +47,7 @@ class Surface {
     "1 -1 1 ",
     "1 1 1 ",
     "-1 1 1",
-    "4 0 1 2 3", 
+    "4 0 1 2 3",
     "4 5 4 7 6 ",
     "4 6 2 1 5 ",
     "4 3 7 4 0 ",
@@ -55,7 +55,7 @@ class Surface {
     "4 5 1 0 4 "
     };
     */
-    
+
     // cleans the matrices first
     for(int i=0; i<nVmax; i++) {
       for(int j=0;j<nFmax;j++) {
@@ -68,12 +68,12 @@ class Surface {
         //}
       }
     }
-    
+
     boolean end_header = false;
     String plyTest = "ply";
     if (!lines[0].equals(plyTest)) exit();
-    float scalingFactor = width/2;  // assumes coordinates in the PLY file are in [-1,1] 
-    
+    float scalingFactor = width/2;  // assumes coordinates in the PLY file are in [-1,1]
+
     int i = 0; // line currently read in the PLY file
     while (!end_header) {
       String[] keywords = split(lines[i], ' ');
@@ -89,18 +89,18 @@ class Surface {
       i++;
     }
     println("v=", this.nV, " f=", this.nF);
-  
+
     // Vertex' 3D coordinates
     for (int j = 0; j < this.nV; j++) {
       String[] keywords = split(lines[i], ' ');
       //println("lines[] " + i + " : " + lines[i]);
       //println("keywords: " + keywords.length);
-      this.positions.add(new PVector(scalingFactor*float(keywords[0]), 
+      this.positions.add(new PVector(scalingFactor*float(keywords[0]),
         scalingFactor*float(keywords[1]), scalingFactor*float(keywords[2])));
       i++;    // increase line number
     }
-    
-    // faces' indexes 
+
+    // faces' indexes
     for(int j=0; j< this.nF; j++) {
       String[] keywords = split(lines[i], ' ');
       ArrayList<Integer> indexes = new ArrayList<Integer>();
@@ -135,9 +135,9 @@ class Surface {
         }
       }
     }
-    
+
   }
- 
+
   //void rescaling (float r){
   //  for(int i=0; i<nV; i++) {
   //    positions.get(i).mult(r);
@@ -158,11 +158,11 @@ class Surface {
     }
     return v/6;
   }
-  //return true if Pi is a boundary point  
+  //return true if Pi is a boundary point
   boolean boundaryPoint(int i ){
     boolean boundary = true;
-    int nhbr=0; //number of nieghboring points 
-    int vf=0; // number of faces 
+    int nhbr=0; //number of nieghboring points
+    int vf=0; // number of faces
     for (int j=0; j<nV; j++) {
       if(adjacency[i][j])
          nhbr++;
@@ -175,7 +175,7 @@ class Surface {
        boundary = false;
     return boundary;
   }
-  
+
   // PVector[] gradient() {
   //  PVector[] gradients_list = new PVector[nV];
   //  for (int i=0; i<nV; i++) {
@@ -267,33 +267,34 @@ class Surface {
       positions.get(i).add(hf.get(i).mult(tau));
     }
   }
-  
-  void flowHarmoniqueContrain() {  
-  
-  //gradient = chaque points : 1/6 somme des det des faces *** det qui peux étre reduit a q*r 
-  
+
+  void volumeConservationFlow() {
+
+  //gradient = chaque points : 1/6 somme des det des faces *** det qui peux étre reduit a q*r
+
   ArrayList<PVector> gradient = new ArrayList<PVector>();
-  
+
   ArrayList<PVector> resFlow = new ArrayList<PVector>();
 
   ArrayList<PVector> actuV;
   PVector bariCentre;
   float multVal = 0;
   float carreGradient = 0;
-    
+
   for(int i = 0; i < S.positions.size();i++) {
-    
+
     if(!boundaryPoint(i)){
     //gradient
-    
+
     PVector detP = new PVector();
     for(int f = 0; f < S.nF;f++) {
       if(S.incidenceVF[i][f]) {
         Face ff = S.faces.get(f);
-        
+
         int index = 0;
-        
-        for(int fff = 0; fff < ff.vertices.size();fff++) {  
+
+        // get index of point i in face ff
+        for(int fff = 0; fff < ff.vertices.size();fff++) {
           if(ff.vertices.get(fff) == i) {
             index = fff;
             break;
@@ -302,12 +303,12 @@ class Surface {
         /*
           println("liste = " + ff.vertices);
           println("index = " + index);*/
-        
-          
+
+
         for(int p = 1; p < ff.vertices.size()-1;p++) {
-          PVector p1 = S.positions.get(ff.vertices.get((p+index) % ff.vertices.size()));
-          PVector p2 = S.positions.get(ff.vertices.get((p+index+1) % ff.vertices.size()));
-          detP = PVector.add(detP,p1.cross(p2)); // pas divisé par 6 (car pas utile)
+          PVector p1 = S.positions.get(ff.vertices.get((index+p) % ff.vertices.size()));
+          PVector p2 = S.positions.get(ff.vertices.get((index+p+1) % ff.vertices.size()));
+          detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
           /*
           println("p1 = " + p1);
           println("p2 = " + p2);
@@ -317,59 +318,53 @@ class Surface {
       }
     }
     gradient.add(detP);
-    
+
     // valeur pour renormalization
     carreGradient += detP.x * detP.x + detP.y * detP.y + detP.z * detP.z;
-    
-    
-    
+
+
+
     //////////FLOW
-    
+
+    // sum of all adjacent points
     actuV = new ArrayList<PVector>();
     for(int j = 0; j < S.positions.size();j++) {
        if(S.adjacency[i][j]) {
          actuV.add(S.positions.get(j));
        }
     }
-    
+
     bariCentre = new PVector();
-    
+
     for(int j = 0; j < actuV.size();j++) {
       bariCentre.add(actuV.get(j));
     }
-    
-    bariCentre.x /=  actuV.size();
-    bariCentre.y /=  actuV.size();
-    bariCentre.z /=  actuV.size();
-    
+
+    bariCentre.div(actuV.size());
     bariCentre.sub(S.positions.get(i));
-    
-    bariCentre.x *= tau;
-    bariCentre.y *= tau;
-    bariCentre.z *= tau;
-    
-    
+    bariCentre.mult(tau);
+
     resFlow.add(bariCentre);
-    
-    // valeur pour renormalization
+
+    // renormalization
     multVal += bariCentre.x * detP.x + bariCentre.y * detP.y + bariCentre.z * detP.z;
-    
+
   }
   }
-  
-  
-    
-  
+
+
+
+
   multVal = multVal / carreGradient;
-  
-  
+
+
     println("gradient : " + gradient);
     println("\n\n");
     println("resFlow : " + resFlow);
-    
+
     println("multVal : " + multVal);
     println("carreGradient : " + carreGradient);
-  
+
     println("flow : " + resFlow);
 
   for(int i = 0; i < S.positions.size();i++) {
@@ -379,7 +374,7 @@ class Surface {
   for(int i = 0; i < S.positions.size();i++) {
     S.positions.get(i).add(resFlow.get(i));
   }
-  
+
 
 }
     //void volumeConservationFlow(float tau) {
@@ -426,7 +421,7 @@ class Surface {
   //    }
   //  }
   //}
-  
+
     void meanCurvatureFlow(float tau) {
     PVector[] mcf = new PVector[nV];
     PVector q, pim1, pi, pip1, Mi;
