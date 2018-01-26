@@ -424,6 +424,11 @@ class Surface {
 
     void meanCurvatureFlow(float tau) {
       PVector[] mcf = new PVector[nV];
+      // Q is the point we calculate the mcf for in each iteration
+      // P[i] is the successor of Q on face j, and the shared vertex of faces (j, j+1)
+      // P[i-1] is the predecessor of Q on face j
+      // P[i+i] is the successor of Q on face (j+1)
+      // Mi is the edge (P[i], Q)
       PVector q, pim1, pi, pip1, Mi;
       int prevIdxPrevFace=-1, nextIdxPrevFace=-1, prevIdxCurrFace=-1, nextIdxCurrFace = -1;
       int firstFace=-1, prevFace=-1, currFace=-1;
@@ -431,15 +436,17 @@ class Surface {
       int degree;
       int idx;
       int f;
+      // angleBefore is the angle (Q, P[i-1], P[i])
+      // angleAfter is the angle (Q, P[i+1], P[i])
+      // A[i] = cotan(angleBefore) + cotan(angleAfter)
       float angleBefore, angleAfter, Ai;
+      PVector e1, e2;
       boolean found, cycle;
-      //int neighbor = -1;
       for (int i=0; i<nV; i++) {
-        mcf[i] = new PVector(0,0,0);
         q = positions.get(i);
-        //if(!boundaryPoint(i)){
-
-        //find a face of point Q
+        // initialize its mcf to 0
+        mcf[i] = new PVector(0,0,0);
+        //find a face containing point Q
         firstFace = 0;
         found = false;
         f = 0;
@@ -448,74 +455,91 @@ class Surface {
             found = true;
             face = faces.get(f);
             degree = face.vertices.size();
+            // index of Q in the face
             idx = face.vertices.indexOf(i);
-            nextIdxCurrFace = face.vertices.get((idx+1)%degree);
             if (idx == 0)
               prevIdxCurrFace = degree-1;
             else
               prevIdxCurrFace = idx-1;
+            prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
+            nextIdxCurrFace = face.vertices.get((idx+1)%degree);
             firstFace = f;
             prevFace = f;
           } else {
             f++;
           }
         }
+        // print("First face: ");
+        // println(firstFace);
 
         currFace = -1;
+        // have we ended up on the initial face, closing the loop?
         cycle = false;
-        // cycle over all faces of point Q in the right order
-        // using the information about the next point in the current face
+        // cycle over all faces containing point Q in the right order
+        // (using the information about the next point in the current face
+        // to find the face they share)
         while (!cycle) {
           f = 0;
           found = false;
-          // find the shared face between Q and its successor
+          // find the other shared face between Q and its successor
           while (!found) {
             if (incidenceVF[i][f] && incidenceVF[nextIdxCurrFace][f] && f!=prevFace) {
               found = true;
               face = faces.get(f);
               degree = face.vertices.size();
               idx = face.vertices.indexOf(i);
+              // update previous/current relations
+              currFace = f;
               prevIdxPrevFace = prevIdxCurrFace;
               nextIdxPrevFace = nextIdxCurrFace;
-              prevIdxCurrFace = nextIdxPrevFace;
+              // possible error source, but should be always verified:
+              // prevIdxCurrFace = nextIdxPrevFace;
+              if (idx == 0)
+                prevIdxCurrFace = degree-1;
+              else
+                prevIdxCurrFace = idx-1;
+              prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
               nextIdxCurrFace = face.vertices.get((idx+1)%degree);
             }
             else {
               f++;
             }
           }
-          // we have found the next face
+          // at this point we have found the next face and update every other vertex
           pim1 = positions.get(prevIdxPrevFace);
           pi = positions.get(nextIdxPrevFace);
           pip1 = positions.get(nextIdxCurrFace);
           Mi = PVector.sub(q,pi);
           angleBefore = PVector.angleBetween(PVector.sub(pim1,q), PVector.sub(pi,pim1));
-          //println(angleBefore);
-          if (angleBefore < -PI)
-            angleBefore += 2*PI;
-          else if (angleBefore > PI)
-            angleBefore -= 2*PI;
+          // e1 = PVector.sub(pim1,q);
+          // e2 = PVector.sub(pi,pim1);
+          // angleBefore = acos((e1.dot(e2))/(e1.mag()*e2.mag()));
           angleAfter = PVector.angleBetween(PVector.sub(pip1,pi), PVector.sub(q,pip1));
-          if (angleAfter < -PI)
-            angleAfter += 2*PI;
-          else if (angleAfter > PI)
-            angleAfter -= 2*PI;
+          // e1 = PVector.sub(pip1,pi);
+          // e2 = PVector.sub(q,pip1);
+          // angleAfter = acos((e1.dot(e2))/(e1.mag()*e2.mag()));
           Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
-          //println(Ai);
-          Mi.mult(Ai);
-          mcf[i].sub(Mi);
+          Mi.mult(Ai/2);
+          mcf[i].add(Mi);
 
-          // before looking for a new face
           prevFace = currFace;
-          prevIdxPrevFace = prevIdxCurrFace;
-          nextIdxPrevFace = nextIdxCurrFace;
+          // check if we the face we just visited is also the one we started with
+          // (in this case, job done)
           if (currFace == firstFace)
             cycle = true;
         }
       }
+
+    float volBefore = this.volume();
     for(int i=0; i<nV; i++) {
       positions.get(i).add(mcf[i].mult(tau));
     }
+    // float volAfter = this.volume();
+    // float ratio = (float) Math.pow(volBefore/volAfter, 1.0/3);
+    // for(int i=0; i<nV; i++) {
+    //   positions.get(i).mult(ratio);
+    // }
+
   }
 
 

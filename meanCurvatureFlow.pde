@@ -2,15 +2,16 @@ int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 float distance = 2;  // for camera
-float tau = 0.2;
+float tau = 0.005;
 float volBefore;
 float volAfter;
 boolean first = true;
 Surface S;
+int its = 0;
 
 void setup() {
   size(1500, 1500, P3D);
-  S = new Surface("cube.txt");
+  S = new Surface("mug.txt");
 }
 
 void draw() {
@@ -24,9 +25,12 @@ void draw() {
   line(0,0,0,width/2,0,0);
   line(0,0,0,0,width/2,0);
   line(0,0,0,0,0,width/2);
-  if (first) {
-    first = false;
-  }
+  S.drawSurface();
+  // if (its<100) {
+  //   println(its);
+  //   S.meanCurvatureFlow(tau);
+  //   its++;
+  // }
 
   S.drawSurface();
   //S.harmonicFlow(tau);
