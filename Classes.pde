@@ -469,8 +469,6 @@ class Surface {
             f++;
           }
         }
-        // print("First face: ");
-        // println(firstFace);
 
         currFace = -1;
         // have we ended up on the initial face, closing the loop?
@@ -530,7 +528,7 @@ class Surface {
         }
       }
 
-    float volBefore = this.volume();
+    // float volBefore = this.volume();
     for(int i=0; i<nV; i++) {
       positions.get(i).add(mcf[i].mult(tau));
     }

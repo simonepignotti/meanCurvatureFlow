@@ -2,7 +2,7 @@ int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 float distance = 2;  // for camera
-float tau = 0.005;
+float tau = 0.01;
 float volBefore;
 float volAfter;
 boolean first = true;
