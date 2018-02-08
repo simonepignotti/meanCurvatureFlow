@@ -2,7 +2,7 @@ int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 float distance = 2;  // for camera
-float tau = 0.01;
+float tau = 0.1;
 float volBefore;
 float volAfter;
 boolean first = true;
@@ -11,7 +11,7 @@ int its = 0;
 
 void setup() {
   size(1500, 1500, P3D);
-  S = new Surface("mug.txt");
+  S = new Surface("sphere10-20.txt");
 }
 
 void draw() {
@@ -25,19 +25,11 @@ void draw() {
   line(0,0,0,width/2,0,0);
   line(0,0,0,0,width/2,0);
   line(0,0,0,0,0,width/2);
-  S.drawSurface();
-  // if (its<100) {
-  //   println(its);
-  //   S.meanCurvatureFlow(tau);
-  //   its++;
-  // }
 
   S.drawSurface();
-  //S.harmonicFlow(tau);
-  //S.harmonicAreaFlow(tau);
-  S.meanCurvatureFlow(tau);
-  //S.volumeConservationFlow();
-
+  PVector[] mcf = S.meanCurvatureFlow();
+  println(mcf);
+  S.applyFlowRenorm(mcf, tau);
 }
 
 void mouseWheel(MouseEvent event) {  // for zooming in and out

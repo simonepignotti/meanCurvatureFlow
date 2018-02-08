@@ -25,6 +25,38 @@ void drawFace(Surface S, int faceIndex, int theStroke, int theFill) {
   endShape();
 }
 
+// void drawFaceColor(Surface S, int faceIndex, int theStroke, int theFill, float[] colors) {
+//   float c;
+//   if (theStroke == -1) {
+//     noStroke();
+//   } else {
+//     stroke(theStroke);
+//   }
+//   if (theFill == -1) {
+//     noFill();
+//   } else {
+//     fill(theFill, 0.1);
+//   }
+//   Face f = S.faces.get(faceIndex);
+//   int n = f.vertices.size();
+//   PVector p;
+//   beginShape();
+//   //println(f);
+//   for (int i=0; i<n; i++) {
+//     int vertexIndex = f.vertices.get(i);
+//     p = S.positions.get(vertexIndex);
+//     c = colors[vertexIndex];
+//     stroke(c);
+//     //println(p);
+//     vertex(p.x, p.y, p.z);
+//
+//   }
+//   p = S.positions.get(f.vertices.get(0));
+//   c = colors[f.vertices.get(0)];
+//   stroke(c);
+//   vertex(p.x, p.y, p.z); // closes the face
+//   endShape();
+// }
 
 Surface tetrahedron() {
   Surface S = new Surface("");
