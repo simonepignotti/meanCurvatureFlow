@@ -17,6 +17,7 @@ void setup() {
   size(1500, 1500, P3D);
   S = new Surface("mug.txt");
   initialVol = S.volume();
+  println("Initial volume: " + abs(initialVol));
 }
 
 void draw() {
@@ -33,8 +34,11 @@ void draw() {
 
   S.drawSurface();
   PVector[] flowVect = S.meanCurvatureFlow();
-  // PVector[] flowVect = S.harmonicFlow();
   S.applyFlowRenorm(flowVect, initialVol, tau);
+
+  // PVector[] flowVect = S.volumeConservationFlow();
+  // S.applyFlowProj(flowVect, tau);
+
 }
 
 void mouseWheel(MouseEvent event) {  // for zooming in and out
