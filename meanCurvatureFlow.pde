@@ -7,11 +7,13 @@ float volBefore;
 float volAfter;
 boolean first = true;
 Surface S;
+float initialVol = 0;
 int its = 0;
 
 void setup() {
   size(1500, 1500, P3D);
-  S = new Surface("sphere10-20.txt");
+  S = new Surface("icosphereBB.txt");
+  initialVol = S.volume();
 }
 
 void draw() {
@@ -28,8 +30,7 @@ void draw() {
 
   S.drawSurface();
   PVector[] mcf = S.meanCurvatureFlow();
-  println(mcf);
-  S.applyFlowRenorm(mcf, tau);
+  S.applyFlowRenorm(mcf, initialVol, tau);
 }
 
 void mouseWheel(MouseEvent event) {  // for zooming in and out
