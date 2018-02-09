@@ -2,17 +2,20 @@ int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 float distance = 2;  // for camera
-float tau = 0.1;
+float tau = 0.01;
 float volBefore;
 float volAfter;
 boolean first = true;
 Surface S;
 float initialVol = 0;
 int its = 0;
+float maxFlowComp = 100;
+Float pInfiniteFloat = Float.POSITIVE_INFINITY;
+Float nInfiniteFloat = Float.NEGATIVE_INFINITY;
 
 void setup() {
   size(1500, 1500, P3D);
-  S = new Surface("icosphereBB.txt");
+  S = new Surface("mug.txt");
   initialVol = S.volume();
 }
 
@@ -29,8 +32,9 @@ void draw() {
   line(0,0,0,0,0,width/2);
 
   S.drawSurface();
-  PVector[] mcf = S.meanCurvatureFlow();
-  S.applyFlowRenorm(mcf, initialVol, tau);
+  PVector[] flowVect = S.meanCurvatureFlow();
+  // PVector[] flowVect = S.harmonicFlow();
+  S.applyFlowRenorm(flowVect, initialVol, tau);
 }
 
 void mouseWheel(MouseEvent event) {  // for zooming in and out

@@ -245,8 +245,8 @@ class Surface {
     PVector[] hf = new PVector[nV];
     PVector h = new PVector(0,0,0);
 
-    for(int i=0; i<nV; i++) {
-      if(!boundaryVertices.contains(i)){
+    for (int i=0; i<nV; i++) {
+      if (!boundaryVertices.contains(i)) {
         h.set(0,0,0);
         int nA = 0;
         for(int j=0; j<nV; j++) {
@@ -410,50 +410,6 @@ class Surface {
 
 
 }
-    //void volumeConservationFlow(float tau) {
-  //  PVector[] hf = new PVector[nV];
-  //  PVector h = new PVector(0,0,0);
-  //  PVector[] gradient = gradient();
-  //  float dot = 0;
-  //  float norm = 0;
-  //  for(int i=0; i<nV; i++) {
-  //    if(!boundaryVertices.contains(i)){
-  //    h.set(0,0,0);
-  //    int nA = 0;
-  //    for(int j=0; j<nV; j++) {
-  //      if (adjacency[i][j] == true) {
-  //        nA++;
-  //        h.add(positions.get(j));
-  //      }
-  //    }
-  //    h.div(nA);
-  //    hf[i] = h.copy();
-  //    //println(hf[i]);
-  //    //println(gradient[i]);
-  //    dot += hf[i].dot(gradient[i]);
-  //    norm += gradient[i].dot(gradient[i]);
-  //  }
-
-  //  }
-  //  //println(dot);
-  //  //println(norm);
-  //  for (int i=0; i<nV; i++) {
-  //    if(!boundaryVertices.contains(i)){
-  //    hf[i].sub(gradient[i].mult(dot/norm));
-  //    positions.get(i).add(hf[i].mult(tau));
-  //    }
-  //    //println(hf[i]);
-  //  }
-  //  for (int j=0; j<this.nV; j++) {
-  //    for (int k=j+1; k<this.nV; k++) {
-  //      if (adjacency[j][k]) {
-  //        PVector c = this.positions.get(j).cross(this.positions.get(k));
-  //        this.edgeCross[j][k] = c.copy();
-  //        this.edgeCross[k][j] = c.mult(-1).copy();
-  //      }
-  //    }
-  //  }
-  //}
 
   PVector[] meanCurvatureFlow() {
     PVector[] mcf = new PVector[nV];
@@ -553,10 +509,48 @@ class Surface {
         // e1 = PVector.sub(pip1,pi);
         // e2 = PVector.sub(q,pip1);
         // angleAfter = acos((e1.dot(e2))/(e1.mag()*e2.mag()));
+
         Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
         Mi.mult(Ai/2);
         // Mi.mult(Ai/(2*starQ));
-        mcf[i].add(Mi);
+        if (angleBefore > PI || angleBefore < -PI || angleAfter > PI || angleAfter < -PI) {
+              //|| angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
+          println("point: " + i);
+          println("angleBefore: " + angleBefore);
+          println("angleAfter: " + angleAfter);
+          println("flowContribution: " + Mi);
+        }
+
+        boolean infiniteComp = false;
+        if (pInfiniteFloat.isInfinite(Mi.x) || pInfiniteFloat.isInfinite(Mi.y) || pInfiniteFloat.isInfinite(Mi.z)) {
+          println("WARNING: INFINITE COMPONENT ON POINT " + i);
+          infiniteComp = true;
+        }
+
+        if (pInfiniteFloat.isNaN(Mi.x) || pInfiniteFloat.isNaN(Mi.y) || pInfiniteFloat.isNaN(Mi.z)) {
+          println("WARNING: NaN COMPONENT ON POINT " + i);
+          infiniteComp = true;
+        }
+
+        if (!infiniteComp) {
+          if (abs(Mi.x) > maxFlowComp) {
+            float ratioComp = maxFlowComp/abs(Mi.x);
+            Mi.mult(ratioComp);
+            // Mi.set(maxFlowComp*Math.signum(Mi.x),Mi.y,Mi.z);
+          }
+          if (abs(Mi.y) > maxFlowComp) {
+            float ratioComp = maxFlowComp/abs(Mi.y);
+            Mi.mult(ratioComp);
+            // Mi.set(Mi.x,maxFlowComp*Math.signum(Mi.y),Mi.z);
+          }
+          if (abs(Mi.z) > maxFlowComp) {
+            float ratioComp = maxFlowComp/abs(Mi.z);
+            Mi.mult(ratioComp);
+            // Mi.set(Mi.x,Mi.y,maxFlowComp*Math.signum(Mi.z));
+          }
+
+          mcf[i].add(Mi);
+        }
 
         prevFace = currFace;
         // check if we the face we just visited is also the one we started with
