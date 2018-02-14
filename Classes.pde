@@ -371,19 +371,15 @@ class Surface {
     // P[i-1] is the successor of Q on face j
     // P[i+i] is the predecessor of Q on face (j+1)
     // Mi is the edge (P[i], Q)
-    PVector q, pim1, pi, pip1, Mi;
+    PVector q, pim1, pi, pip1, Mi, qpi, qpip1, N;
     int prevIdxPrevFace=-1, nextIdxPrevFace=-1, prevIdxCurrFace=-1, nextIdxCurrFace = -1;
     int firstFace=-1, prevFace=-1, currFace=-1;
     Face face;
     int degree;
     int idx;
     int f;
-    // angleBefore is the angle (Q, P[i-1], P[i])
-    // angleAfter is the angle (Q, P[i+1], P[i])
-    // A[i] = cotan(angleBefore) + cotan(angleAfter)
-    float angleBefore, angleAfter, Ai, starQ;
-    PVector e1, e2;
     boolean found, cycle;
+
     for (int i=0; i<nV; i++) {
       q = positions.get(i);
       // initialize its mcf to 0
@@ -447,19 +443,12 @@ class Surface {
         pim1 = positions.get(nextIdxPrevFace);
         pi = positions.get(prevIdxPrevFace);
         pip1 = positions.get(prevIdxCurrFace);
-        Mi = PVector.sub(q,pi);
-        angleBefore = PVector.angleBetween(PVector.sub(pim1,q), PVector.sub(pi,pim1));
-        angleAfter = PVector.angleBetween(PVector.sub(pip1,pi), PVector.sub(q,pip1));
-
-        Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
-        Mi.mult(Ai/2);
-        // Mi.mult(Ai/(2*starQ));
-        if (angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
-          println("point: " + i);
-          println("angleBefore: " + angleBefore);
-          println("angleAfter: " + angleAfter);
-          println("flowContribution: " + Mi);
-        }
+        Mi = PVector.sub(pip1,pi);
+        qpi = PVector.sub(pi,q);
+        qpip1 = PVector.sub(pip1,q);
+        N = qpi.cross(qpip1);
+        N.div(N.mag());
+        Mi = N.cross(Mi).mult(-0.5);
 
         boolean infiniteComp = false;
         if (pInfiniteFloat.isInfinite(Mi.x) || pInfiniteFloat.isInfinite(Mi.y) || pInfiniteFloat.isInfinite(Mi.z)) {
@@ -504,7 +493,7 @@ class Surface {
 
   }
 
-  PVector[] meanCurvatureFlowV2() {
+  PVector[] meanCurvatureFlowCotan() {
     PVector[] mcf = new PVector[nV];
     // Q is the point we calculate the mcf for in each iteration
     // P[i] is the predecessor of Q on face j, the successor of Q on face (j+1),
@@ -522,8 +511,7 @@ class Surface {
     // angleBefore is the angle (Q, P[i-1], P[i])
     // angleAfter is the angle (Q, P[i+1], P[i])
     // A[i] = cotan(angleBefore) + cotan(angleAfter)
-    float angleBefore, angleAfter, Ai, starQ;
-    PVector e1, e2;
+    float angleBefore, angleAfter, Ai;
     boolean found, cycle;
     for (int i=0; i<nV; i++) {
       q = positions.get(i);
