@@ -1,62 +1,32 @@
-void drawFace(Surface S, int faceIndex, int theStroke, int theFill) {
+
+void drawFace(Surface S, int faceIndex, int theStroke, int theFill, PApplet g) {
   if (theStroke == -1) {
-    noStroke();
+    g.noStroke();
   } else {
-    stroke(theStroke);
+    g.stroke(theStroke);
   }
   if (theFill == -1) {
-    noFill();
+    g.noFill();
   } else {
-    fill(theFill);
+    g.fill(theFill);
   }
   Face f = S.faces.get(faceIndex);
   int n = f.vertices.size();
   PVector p;
-  beginShape();
+  g.beginShape();
   //println(f);
   for (int i=0; i<n; i++) {
     int vertexIndex = f.vertices.get(i);
     p = S.positions.get(vertexIndex);
     //println(p);
-    vertex(p.x, p.y, p.z);
+    g.vertex(p.x, p.y, p.z);
   }
   p = S.positions.get(f.vertices.get(0));
-  vertex(p.x, p.y, p.z); // closes the face
-  endShape();
+  g.vertex(p.x, p.y, p.z); // closes the face
+  g.endShape();
 }
 
-// void drawFaceColor(Surface S, int faceIndex, int theStroke, int theFill, float[] colors) {
-//   float c;
-//   if (theStroke == -1) {
-//     noStroke();
-//   } else {
-//     stroke(theStroke);
-//   }
-//   if (theFill == -1) {
-//     noFill();
-//   } else {
-//     fill(theFill, 0.1);
-//   }
-//   Face f = S.faces.get(faceIndex);
-//   int n = f.vertices.size();
-//   PVector p;
-//   beginShape();
-//   //println(f);
-//   for (int i=0; i<n; i++) {
-//     int vertexIndex = f.vertices.get(i);
-//     p = S.positions.get(vertexIndex);
-//     c = colors[vertexIndex];
-//     stroke(c);
-//     //println(p);
-//     vertex(p.x, p.y, p.z);
-//
-//   }
-//   p = S.positions.get(f.vertices.get(0));
-//   c = colors[f.vertices.get(0)];
-//   stroke(c);
-//   vertex(p.x, p.y, p.z); // closes the face
-//   endShape();
-// }
+
 
 Surface tetrahedron() {
   Surface S = new Surface("");
@@ -98,3 +68,36 @@ Surface tetrahedron() {
   return(S);
 
 }
+
+void applyFlow(MyWinData data) {
+    Surface S = data.S;
+    int flow = data.flow % 10;
+    int renormalizationType = data.flow / 10;
+    float tau = data.tau;
+    float initialVol = data.initialVol;
+    switch(flow) {
+        case 1:
+          applyFlowVolumeRenorm(S,S.meanCurvatureFlow(),initialVol,tau);
+          break;
+      }
+  }
+
+  void applyFlowProj(PVector[] flow, float tau) {
+    return;
+  }
+
+  void applyFlowVolumeRenorm(Surface S, PVector[] flow, float initialVol, float tau) {
+
+    for (int i=0; i<S.nV; i++) {
+      // if (!boundaryVertices.contains(i))
+        S.positions.get(i).add(flow[i].mult(tau));
+    }
+
+    float volAfter = S.volume();
+    float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
+
+    for(int i=0; i<S.nV; i++) {
+      S.positions.get(i).mult(ratio);
+    }
+
+  }

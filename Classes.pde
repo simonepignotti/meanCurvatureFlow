@@ -1,3 +1,15 @@
+class MyWinData extends GWinData {
+    Surface S;
+    GButton menuB;
+    int flow; //on va dire négatif c'est "en pause"
+    int rotaX = 0;
+    int rotaY = 0;
+    float initialVol = 0;
+    float tau = 0.1;
+}
+
+
+
 class Face {
   // faces are oriented
   ArrayList<Integer> vertices = new ArrayList<Integer>();
@@ -9,6 +21,7 @@ class Face {
   }
 }
 
+
 class Surface {
   int nV;
   int nE;
@@ -19,57 +32,14 @@ class Surface {
   boolean[][] incidenceVF = new boolean[nVmax][nFmax]; // true iff v is in f
   boolean[][] adjacency = new boolean[nVmax][nVmax]; // true iff v1 ~ v2
 
-  void drawSurface() {
+  void drawSurface(PApplet graph) {
 
     for (int i=0; i<this.nF; i++) {
-      drawFace(this, i, 250, 137);
+      drawFace(this, i, 250, 137, graph);
     }
 
-    // draw vertices
-    // for(i=0; i< this.nV; i++) {
-    // pushMatrix();
-    // println(positions.get(i).x,positions.get(i).y,positions.get(i).z);
-    // translate(positions.get(i).x,positions.get(i).y,positions.get(i).z);
-    // sphere(10);
-    // popMatrix();
-    // }
-
   }
-
-  // void drawSurfaceMCFColoring() {
-  //   int i;
-  //   float max = 0;
-  //   PVector[] mcf = S.meanCurvatureFlow(tau);
-  //   float volBefore = this.volume();
-  //   float[] colors = new float[nV];
-  //   for (int j=0; j<mcf.length; j++) {
-  //     if (mcf[j].mag() > max) {
-  //       max = mcf[j].mag();
-  //     }
-  //   }
-  //   for (int j=0; j<mcf.length; j++) {
-  //     colors[j] = mcf[j].mag()*255/max;
-  //   }
-  //   for (i=0; i<this.nF; i++) {
-  //     drawFace(this, i, 250, 137, colors);
-  //   }
-  //   int count = 0;
-  //   for (i=0; i<this.nV; i++) {
-  //     PVector m = mcf[i];
-  //     if (m.mag()<1) {
-  //       this.positions.get(i).add(m);
-  //     }
-  //     else {
-  //       count++;
-  //     }
-  //   }
-  //   println(count);
-  //   float volAfter = this.volume();
-  //   float ratio = (float) Math.pow(volBefore/volAfter, 1.0/3);
-  //   for(i=0; i<nV; i++) {
-  //     positions.get(i).mult(ratio);
-  //   }
-  // }
+  
 
   Surface(String filename) {
     String[] lines = loadStrings(filename);  // in data folder
@@ -143,11 +113,11 @@ class Surface {
   }
 
   float volume() {
-
+    
     float v = 0;
     int degree = 0;
     PVector p1, p2, p3;
-
+    
     for (Face f:faces) {
       degree = f.vertices.size();
       for (int i=0; i<=degree-3; i++) {
@@ -186,30 +156,6 @@ class Surface {
 
   }
 
-  void applyFlowProj(PVector[] flow, float tau) {
-
-    for (int i=0; i<this.nV; i++) {
-      this.positions.get(i).add(flow[i].mult(tau));
-    }
-
-  }
-
-  void applyFlowRenorm(PVector[] flow, float initialVol, float tau) {
-
-    for (int i=0; i<this.nV; i++) {
-      // if (!boundaryVertices.contains(i))
-        this.positions.get(i).add(flow[i].mult(tau));
-    }
-
-    float volAfter = this.volume();
-    float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
-
-    for(int i=0; i<nV; i++) {
-      positions.get(i).mult(ratio);
-    }
-
-  }
-
   PVector[] gradient() {
 
     PVector[] grad = new PVector[nV];
@@ -235,7 +181,7 @@ class Surface {
             for(int j=1; j<degree-1; j++) {
               p1 = this.positions.get(face.vertices.get((idx+j) % degree));
               p2 = this.positions.get(face.vertices.get((idx+j+1) % degree));
-              g.add(p1.cross(p2)); // do not divide by 6 (useless)
+              g.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
             }
           }
         }
@@ -266,8 +212,9 @@ class Surface {
     return hf;
   }
 
-  //harmonic flow divided by the area
-  void harmonicAreaFlow(float tau) {
+    //harmonic flow divided by the area
+   void harmonicAreaFlow(MyWinData d) {
+    float tau = d.tau;
     ArrayList<PVector> hf = new ArrayList<PVector>();
     ArrayList<PVector> niebors = new ArrayList<PVector>();
     PVector h = new PVector(0,0,0);
@@ -293,6 +240,7 @@ class Surface {
         //area of triangle Pi - Pj - Pjp1 = (1/2) * ||Pi-Pj X Pj-Pjp1||
         PVector tempA = PVector.sub(Pj,Pi).cross(PVector.sub(Pjp1,Pj));
         A += 0.5*(tempA.mag());
+
       }
       h.div(A);
       hf.add(h.copy());
@@ -304,60 +252,116 @@ class Surface {
     }
   }
 
-  PVector[] volumeConservationFlow() {
+  void volumeConservationFlow(MyWinData d) {
+    Surface S = d.S;
+    float tau = d.tau;
+  //gradient = chaque points : 1/6 somme des det des faces *** det qui peux étre reduit a q*r
 
-    //gradient = chaque points : 1/6 somme des det des faces *** det qui peux étre reduit a q*r
+  ArrayList<PVector> gradient = new ArrayList<PVector>();
 
-    PVector[] grad = this.gradient();
+  ArrayList<PVector> resFlow = new ArrayList<PVector>();
 
-    PVector[] vcf = new PVector[nV];
+  ArrayList<PVector> actuV;
+  PVector bariCentre;
+  float multVal = 0;
+  float carreGradient = 0;
 
-    ArrayList<PVector> actuV;
-    PVector bariCentre;
-    float multVal = 0;
-    float carreGradient = 0;
+  for(int i = 0; i < S.positions.size();i++) {
 
-    for(int i=0; i<nV; i++) {
-
-      // valeur pour renormalization
-      carreGradient += grad[i].x * grad[i].x + grad[i].y * grad[i].y + grad[i].z * grad[i].z;
-
-      //////////FLOW
-
-      // sum of all adjacent points
-      actuV = new ArrayList<PVector>();
-      for(int j=0; j<nV; j++) {
-         if(adjacency[i][j]) {
-           actuV.add(positions.get(j));
-         }
+      if(!boundaryVertices.contains(i)) {
+        //gradient
+    
+        PVector detP = new PVector();
+        for(int f = 0; f < S.nF;f++) {
+          if(S.incidenceVF[i][f]) {
+            Face ff = S.faces.get(f);
+    
+            int index = 0;
+    
+            // get index of point i in face ff
+            for(int fff = 0; fff < ff.vertices.size();fff++) {
+              if(ff.vertices.get(fff) == i) {
+                index = fff;
+                break;
+              }
+            }
+            /*
+              println("liste = " + ff.vertices);
+              println("index = " + index);*/
+    
+    
+            for(int p = 1; p < ff.vertices.size()-1;p++) {
+              PVector p1 = S.positions.get(ff.vertices.get((index+p) % ff.vertices.size()));
+              PVector p2 = S.positions.get(ff.vertices.get((index+p+1) % ff.vertices.size()));
+              detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
+              /*
+              println("p1 = " + p1);
+              println("p2 = " + p2);
+              println("detP = " + detP);
+              */
+            }
+          }
+        }
+        gradient.add(detP);
+    
+        // valeur pour renormalization
+        carreGradient += detP.x * detP.x + detP.y * detP.y + detP.z * detP.z;
+    
+    
+    
+        //////////FLOW
+    
+        // sum of all adjacent points
+        actuV = new ArrayList<PVector>();
+        for(int j = 0; j < S.positions.size();j++) {
+           if(S.adjacency[i][j]) {
+             actuV.add(S.positions.get(j));
+           }
+        }
+    
+        bariCentre = new PVector();
+    
+        for(int j = 0; j < actuV.size();j++) {
+          bariCentre.add(actuV.get(j));
+        }
+    
+        bariCentre.div(actuV.size());
+        bariCentre.sub(S.positions.get(i));
+        bariCentre.mult(tau);
+    
+        resFlow.add(bariCentre);
+    
+        // renormalization
+        multVal += bariCentre.x * detP.x + bariCentre.y * detP.y + bariCentre.z * detP.z;
+    
       }
-
-      bariCentre = new PVector(0,0,0);
-
-      for(int j=0; j<actuV.size(); j++) {
-        bariCentre.add(actuV.get(j));
-      }
-
-      bariCentre.div(actuV.size());
-      bariCentre.sub(S.positions.get(i));
-
-      vcf[i] = bariCentre;
-
-      // renormalization
-      multVal += bariCentre.x * grad[i].x + bariCentre.y * grad[i].y + bariCentre.z * grad[i].z;
-
-    // }
     }
 
+
+
+  
     multVal = multVal / carreGradient;
-
-    for(int i=0; i<nV; i++) {
-      vcf[i].sub(grad[i].mult(multVal));
+  
+  
+      println("gradient : " + gradient);
+      println("\n\n");
+      println("resFlow : " + resFlow);
+  
+      println("multVal : " + multVal);
+      println("carreGradient : " + carreGradient);
+  
+      println("flow : " + resFlow);
+  
+    for(int i = 0; i < S.positions.size();i++) {
+      resFlow.get(i).sub(gradient.get(i).mult(multVal));
     }
-
-    return vcf;
-
-}
+  
+    for(int i = 0; i < S.positions.size();i++) {
+      S.positions.get(i).add(resFlow.get(i));
+    }
+  
+  
+  }
 
   PVector[] meanCurvatureFlow() {
     PVector[] mcf = new PVector[nV];
@@ -461,8 +465,8 @@ class Surface {
         Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
         Mi.mult(Ai/2);
         // Mi.mult(Ai/(2*starQ));
-        if (//angleBefore > PI || angleBefore < -PI || angleAfter > PI || angleAfter < -PI) {
-              angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
+        if (angleBefore > PI || angleBefore < -PI || angleAfter > PI || angleAfter < -PI) {
+              //|| angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
           println("point: " + i);
           println("angleBefore: " + angleBefore);
           println("angleAfter: " + angleAfter);
@@ -512,7 +516,8 @@ class Surface {
 
   }
 
-  void meanCurvatureFlowVolConstr(float tau) {
+  void meanCurvatureFlowVolConstr(MyWinData d) {
+    float tau = d.tau;
     PVector[] mcf = new PVector[nV];
     PVector[] gradient = new PVector[nV];
     float gradientNorm = 0;
@@ -562,8 +567,8 @@ class Surface {
 
           // gradient
           for(int p=1; p<degree-1; p++) {
-            PVector p1 = S.positions.get(face.vertices.get((idx+p) % degree));
-            PVector p2 = S.positions.get(face.vertices.get((idx+p+1) % degree));
+            PVector p1 = positions.get(face.vertices.get((idx+p) % degree));
+            PVector p2 = positions.get(face.vertices.get((idx+p+1) % degree));
             detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
             //println("while 1");
           }
@@ -602,8 +607,8 @@ class Surface {
             nextIdxCurrFace = face.vertices.get((idx+1)%degree);
             // gradient
             for(int p = 1; p < degree-1;p++) {
-              PVector p1 = S.positions.get(face.vertices.get((idx+p) % degree));
-              PVector p2 = S.positions.get(face.vertices.get((idx+p+1) % degree));
+              PVector p1 = positions.get(face.vertices.get((idx+p) % degree));
+              PVector p2 = positions.get(face.vertices.get((idx+p+1) % degree));
               detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
               //println("while 2");
             }
@@ -658,7 +663,8 @@ class Surface {
   }
 
 
-void squarMeanCurvatureFlow(float tau) {
+void squarMeanCurvatureFlow(MyWinData d) {
+    float tau = d.tau;
     PVector[] smcf = new PVector[nV];
     PVector[] mcf = new PVector[nV];
     PVector q, pim1, pi, pip1, Mi;
