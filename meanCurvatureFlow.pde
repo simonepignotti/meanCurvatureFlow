@@ -2,7 +2,7 @@ int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 float distance = 2;  // for camera
-float tau = 0.01;
+float tau = 0.1;
 float volBefore;
 float volAfter;
 boolean first = true;
@@ -15,7 +15,7 @@ Float nInfiniteFloat = Float.NEGATIVE_INFINITY;
 
 void setup() {
   size(1500, 1500, P3D);
-  S = new Surface("mug.txt");
+  S = new Surface("icosphereBB.txt");
   initialVol = S.volume();
   println("Initial volume: " + abs(initialVol));
 }

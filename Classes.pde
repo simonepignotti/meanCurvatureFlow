@@ -461,8 +461,8 @@ class Surface {
         Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
         Mi.mult(Ai/2);
         // Mi.mult(Ai/(2*starQ));
-        if (angleBefore > PI || angleBefore < -PI || angleAfter > PI || angleAfter < -PI) {
-              //|| angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
+        if (//angleBefore > PI || angleBefore < -PI || angleAfter > PI || angleAfter < -PI) {
+              angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
           println("point: " + i);
           println("angleBefore: " + angleBefore);
           println("angleAfter: " + angleAfter);
