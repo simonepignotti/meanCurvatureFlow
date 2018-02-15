@@ -134,7 +134,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
             }
         }
         int f = Integer.parseInt(r);
-        if (f < 0 || f > 3) {
+        if (f < 0 || f > 7) {
                 println("must be between 0 and 3");
                 flowT.setText("");
                 return;
