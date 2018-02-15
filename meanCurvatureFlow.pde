@@ -249,7 +249,6 @@ public void windowDraw(PApplet appc, GWinData data) { // width partout
     appc.line(0,0,0,0,0,appc.width*10);
 
     if(flowing && d.flow > 0) {
-        println("Flowing active");
         applyFlow(d);
     }/**/
 

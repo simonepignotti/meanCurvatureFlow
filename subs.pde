@@ -59,6 +59,8 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
   PVector[] grad = S.gradient();
   PVector[] newFlow = new PVector[S.nV];
   PVector f, g;
+  // gNorm: norm of the gradient
+  // dotP: dot product between the flow and the gradient
   float gNorm, dotP, volAfter;
 
   for (int i=0; i<S.nV; i++) {
@@ -67,24 +69,27 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
     gNorm = g.x * g.x + g.y * g.y + g.z * g.z;;
     dotP = f.x*g.x + f.y*g.y + f.z*g.z;
     dotP /= gNorm;
-    println(f);
-    println(g.mult(dotP));
-    newFlow[i] = PVector.sub(f,g.mult(dotP)).mult(tau);
+    // equivalent:
+    // gNorm = g.mag();
+    // dotP = f.dot(g)/gNorm;
+    // println(f);
+    // println(PVector.mult(g, dotP));
+    newFlow[i] = PVector.sub(f,PVector.mult(g, dotP)).mult(tau);
   }
 
   for (int i=0; i<S.nV; i++) {
     S.positions.get(i).add(newFlow[i]);
   }
 
-  volAfter = S.volume();
-  if (abs(initialVol-volAfter) > 0.1) {
-    println("WARNING: the volume is not conserved, applying manual conservation");
-    println(abs(initialVol-volAfter));
-    float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
-    for(int i=0; i<S.nV; i++) {
-      S.positions.get(i).mult(ratio);
-    }
-  }
+  // volAfter = S.volume();
+  // if (abs(initialVol-volAfter) > 0.1) {
+  //   println("WARNING: the volume is not conserved, applying manual conservation");
+  //   println(abs(initialVol-volAfter));
+  //   float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
+  //   for(int i=0; i<S.nV; i++) {
+  //     S.positions.get(i).mult(ratio);
+  //   }
+  // }
 
 }
 
