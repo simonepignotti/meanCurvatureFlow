@@ -38,25 +38,25 @@ void setup() {
   surfaces = new MyWinData[maxS];
   btnStart = new GButton(this, 20, 30, 80, 80, "NEW");
   btnFlow = new GButton(this, 20, 150, 80, 80, "Start flow");
-  
-  
+
+
   //EDITING
-  
+
   editFlow = new GButton(this, 40, 30, 120, 90, "Flow type");
   editTau = new GButton(this, 250, 30, 120, 90, "Tau factor");
-  
+
   editActiveFlow = new GButton(this, 40, 180,120, 90, "Active");
   editSurface = new GButton(this, 250, 180, 120, 90, "Surface File");
   endEdit = new GButton(this, 460, 180, 120, 90, "OK");
-  
+
   flowT = new GTextField(this, 50, 140, 110, 24);
   tauT  = new GTextField(this, 260, 140, 110, 24);
-  
-  flowT.setPromptText("new flow value"); 
+
+  flowT.setPromptText("new flow value");
   tauT.setPromptText("new tau value");
-  
+
   //EDITING
-  
+
   buttonsVisibility(true);
 }
 
@@ -72,18 +72,18 @@ void buttonsVisibility(boolean menu) {
     for(int i=0;i<nbS;i++) {
         surfaces[i].menuB.setVisible(menu);
     }
-    
+
     editFlow.setVisible(!menu);
     editActiveFlow.setVisible(!menu);
     editTau.setVisible(!menu);
     editSurface.setVisible(!menu);
     endEdit.setVisible(!menu);
-    
+
     flowT.setVisible(!menu);
     tauT.setVisible(!menu);
-    
+
     refreshFlowButtons();
-    
+
 }
 
 void refreshFlowButtons() {
@@ -103,7 +103,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
         surfaceWindow();
         return;
     }
-    
+
     if (btnFlow == button) {
         flowing = !flowing;
         println("Change Flowing to : " + flowing);
@@ -113,15 +113,15 @@ public void handleButtonEvents(GButton button, GEvent event) {
           btnFlow.setText("Stop flow");
         return;
     }
-    
-    
+
+
     for(int i=0;i<nbS;i++) {
       if (surfaces[i].menuB == button) {
           editing = i;
           buttonsVisibility(false);
       }
     }
-    
+
     if (editFlow == button) {
         String r = flowT.getText();
         if(r.isEmpty())
@@ -131,7 +131,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
                 println("not an int");
                 flowT.setText("");
                 return;
-            } 
+            }
         }
         int f = Integer.parseInt(r);
         if (f < 0 || f > 3) {
@@ -146,13 +146,13 @@ public void handleButtonEvents(GButton button, GEvent event) {
         refreshFlowButtons();
         return;
     }
-    
+
     if (editActiveFlow == button) {
         surfaces[editing].flow *= -1;
         refreshFlowButtons();
         return;
     }
-    
+
     if (editTau == button) {
         String r = tauT.getText();
         if(r.isEmpty())
@@ -162,7 +162,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
                 println("not an int");
                 tauT.setText("");
                 return;
-            } 
+            }
         }
         float t = Float.parseFloat(r);
         if (t < 0 || t > 1000) {
@@ -171,13 +171,13 @@ public void handleButtonEvents(GButton button, GEvent event) {
                 return;
         }
         t = t/1000;
-        
+
         surfaces[editing].tau = t;
         tauT.setText("");
         editTau.setText("Tau factor = " + surfaces[editing].tau);
         return;
     }
-    
+
     if (editSurface == button) {
         String filename = G4P.selectInput("Input Dialog", "txt", "Surface file");
         try{
@@ -185,6 +185,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
                 return;
             Surface temp = new Surface(filename);
             surfaces[editing].S = temp;
+            surfaces[editing].initialVol =  surfaces[editing].S.volume();
         } catch(Exception e) {
             println("can't use this file");
             return;
@@ -239,19 +240,19 @@ public void windowDraw(PApplet appc, GWinData data) { // width partout
     appc.background(50);
     appc.camera(appc.width, appc.width, 1800, appc.width/2, appc.width/2, appc.width/2, 0, 1, 0);
     appc.translate(appc.width/2, appc.width/2, 0);
-    
+
     appc.rotateX(TWO_PI * d.rotaX / appc.width);
     appc.rotateY(TWO_PI * d.rotaY / appc.width);
-    
+
     appc.line(0,0,0,appc.width*10,0,0);
     appc.line(0,0,0,0,appc.width*10,0);
     appc.line(0,0,0,0,0,appc.width*10);
-    
+
     if(flowing && d.flow > 0) {
         println("Flowing active");
         applyFlow(d);
     }/**/
-      
+
     d.S.drawSurface(appc);
 }
 
@@ -262,32 +263,32 @@ public void surfaceWindow() {
   }
   GWindow mywindow = GWindow.getWindow(this, "Surface", 50, 50, 600, 600, P3D);  //P3D
   MyWinData mydata = new MyWinData();
- 
+
   mydata.S = new Surface("cube.txt");
-  mydata.initialVol =  mydata.S .volume();
-  
+  mydata.initialVol =  mydata.S.volume();
+
   mydata.flow = 0;
   mydata.menuB = new GButton(this, 130 + nbS*110, 70, 80, 80, "Surface n°" + nbS);
-  
-   //<>//
-  mywindow.addData(mydata); 
+
+
+  mywindow.addData(mydata);
   mywindow.addDrawHandler(this, "windowDraw");
   mywindow.addMouseHandler(this, "windowMouse");
   mywindow.addKeyHandler(this,"windowKey");
   mywindow.setActionOnClose(GWindow.KEEP_OPEN);
-  
+
   surfaces[nbS] = mydata;
   nbS++;
 }
 
 
 void keyReleased() {
-  
+
   if (key == 'f') {
     flowing = !flowing;
     println("Flowing = ", flowing);
   }
-  
+
   if (key == 'd') {
     //flowHarmoniqueContrain();
     println("1 Flowing ");
