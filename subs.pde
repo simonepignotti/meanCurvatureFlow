@@ -79,6 +79,9 @@ void applyFlow(MyWinData data) {
         case 1:
           applyFlowVolumeRenorm(S,S.meanCurvatureFlow(),initialVol,tau);
           break;
+        case 2:
+          applyFlowProj(S,S.meanCurvatureFlow(),initialVol,tau);
+          break;
       }
   }
 
