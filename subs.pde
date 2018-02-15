@@ -111,10 +111,10 @@ void applyFlow(MyWinData data) {
     if (abs(initialVol-volAfter) > 0.1) {
       println("WARNING: the volume is not conserved, applying manual conservation");
       println(abs(initialVol-volAfter));
-      // float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
-      // for(int i=0; i<S.nV; i++) {
-      //   S.positions.get(i).mult(ratio);
-      // }
+      float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
+      for(int i=0; i<S.nV; i++) {
+        S.positions.get(i).mult(ratio);
+      }
     }
 
   }
