@@ -158,38 +158,26 @@ public void handleButtonEvents(GButton button, GEvent event) {
     }
 
     if (editTau == button) {
-        String r = tauT.getText();
-        if(r.isEmpty())
-            return;
-        for (int i=0; i< r.length();i++) {
-            if (r.charAt(i) <'0' || r.charAt(i) > '9') {
-                println("not an int");
-                tauT.setText("");
-                return;
-            }
-        }
-        float t = Float.parseFloat(r);
-        if (t < 0 || t > 1000) {
-                println("must be between 0 and 1000");
-                tauT.setText("");
-                return;
-        }
-        
-        for (int i=1; i <= 4;i++) {
-            if(t < pow(10,i)) {
-                t = t/pow(10,i);
-                break;
-            }
-            if(i == 4) 
-                t=1;
-        }
-        
-
-        surfaces[editing].tau = t;
-        tauT.setText("");
-        editTau.setText("Tau factor = " + surfaces[editing].tau);
-        return;
-    }
+       String r = tauT.getText();
+       if(r.isEmpty())
+           return;
+       try {
+           float t = Float.parseFloat(r);
+           if (t <= 0 || t > 1) {
+               println("bad value (need in ]0,1])");
+               tauT.setText("");
+               return;
+           }
+           surfaces[editing].tau = t;
+           tauT.setText("");
+           editTau.setText("Tau factor = " + surfaces[editing].tau);
+           return;
+       } catch(Exception e) {
+           println("not an float");
+           tauT.setText("");
+           return;
+       }
+   }
 
     if (editSurface == button) {
         String filename = G4P.selectInput("Input Dialog", "txt", "Surface file");

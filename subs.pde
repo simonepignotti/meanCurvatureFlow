@@ -81,6 +81,7 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
     S.positions.get(i).add(newFlow[i]);
   }
 
+  // apply renormalization if the volume varied too much due to numerical errors
   // volAfter = S.volume();
   // if (abs(initialVol-volAfter) > 0.1) {
   //   println("WARNING: the volume is not conserved, applying manual conservation");
@@ -96,7 +97,7 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
 void applyFlowRenorm(Surface S, PVector[] flow, float initialVol, float tau) {
 
   for (int i=0; i<S.nV; i++) {
-    // if (!boundaryVertices.contains(i))
+    if (!S.boundaryVertices.contains(i))
       S.positions.get(i).add(flow[i].mult(tau));
   }
 
