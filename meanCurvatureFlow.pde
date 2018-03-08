@@ -66,6 +66,7 @@ void draw() {
   background(130, 130, 130);
 }
 
+//change de menu, en changeant la visibilité des bouttons
 void buttonsVisibility(boolean menu) {
     btnStart.setVisible(menu);
     btnFlow.setVisible(menu);
@@ -86,6 +87,7 @@ void buttonsVisibility(boolean menu) {
 
 }
 
+// réactualise les titres des bouttons
 void refreshFlowButtons() {
     if(editing >= 0) {
         if(surfaces[editing].flow > 0)
@@ -97,6 +99,8 @@ void refreshFlowButtons() {
     }
 }
 
+
+// réagie aux interaction utilisation (affécte une fonction a chaque bouton)
 public void handleButtonEvents(GButton button, GEvent event) {
     if (btnStart == button) {
         println("new surface.");
@@ -170,7 +174,16 @@ public void handleButtonEvents(GButton button, GEvent event) {
                 tauT.setText("");
                 return;
         }
-        t = t/1000;
+        
+        for (int i=1; i <= 4;i++) {
+            if(t < pow(10,i)) {
+                t = t/pow(10,i);
+                break;
+            }
+            if(i == 4) 
+                t=1;
+        }
+        
 
         surfaces[editing].tau = t;
         tauT.setText("");
@@ -201,6 +214,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
     }
 }
 
+// réactualise la position de la sourie si le boutton est activer
 public void windowMouse(PApplet appc, GWinData data, MouseEvent event) {
     MyWinData d = (MyWinData)data;
     switch(event.getAction()) {
@@ -215,6 +229,7 @@ public void windowMouse(PApplet appc, GWinData data, MouseEvent event) {
     }
 }
 
+// permet de zoomer et dézoomer dans les fenetres d'affichages
 public void windowKey(PApplet appc, GWinData data, KeyEvent ev) {
     MyWinData d = (MyWinData)data;
     if(ev.getAction() == KeyEvent.PRESS) {
@@ -235,6 +250,7 @@ public void windowKey(PApplet appc, GWinData data, KeyEvent ev) {
     }
 }
 
+// affichages
 public void windowDraw(PApplet appc, GWinData data) { // width partout
     MyWinData d = (MyWinData)data;
     appc.background(50);
@@ -250,11 +266,12 @@ public void windowDraw(PApplet appc, GWinData data) { // width partout
 
     if(flowing && d.flow > 0) {
         applyFlow(d);
-    }/**/
+    }
 
     d.S.drawSurface(appc);
 }
 
+// création d'une nouvelle fenetre
 public void surfaceWindow() {
   if(nbS >= maxS) {
       println("max surfaces, no more creation");
@@ -278,18 +295,4 @@ public void surfaceWindow() {
 
   surfaces[nbS] = mydata;
   nbS++;
-}
-
-
-void keyReleased() {
-
-  if (key == 'f') {
-    flowing = !flowing;
-    println("Flowing = ", flowing);
-  }
-
-  if (key == 'd') {
-    //flowHarmoniqueContrain();
-    println("1 Flowing ");
-  }
 }

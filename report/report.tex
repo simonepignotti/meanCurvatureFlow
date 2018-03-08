@@ -1,0 +1,63 @@
+\documentclass[12pt]{article}
+\begin{document}
+\textbf{HarmonicFlow:}
+\\ For each vertex $P_i$, we check if $P_i$ is a boundary point, if not we find all the adjacent vertex add the to $\vec{H}$ and divide by their number $a_A$.
+\\ \begin{center}
+$\vec{H}=\frac{1}{n_A} \sum_{j=1}^{n_A} \vec{P_j}$
+\end{center}
+\textbf{HarmonicAreaFlow:}
+\\ For each vertex $P_i$, we check if $P_i$ is a boundary point, if not we find all the adjacent points and save them in the array "neighbours". First, we calculate the harmonic flow $\vec{H}$ the we calculate the area in the following way:
+\\ - Take $P_i$ as the first element in the array 
+\\ - We take every two consecutive elements in the array 
+\\ The area is :
+\begin{center}
+$A=\frac{1}{2} \sum_{j=1}^{n_A-1} (\vec{P_jP_i} * \vec{P_{j+1}P_j} )$
+\end{center}
+Finally the flow will be:
+\begin{center}
+$\vec{H}=\frac{1}{A} \vec{H}$
+\end{center}
+\textbf{VolumeConservationFlow:}
+\\ \textit{Step 1:} (Gradient)
+\\ For each vertex $P_i$, we loop over the faces and for the incident face we do the following steps:
+\\- Find the position of $P_i$ in this face 
+\\-We loop over all the vertices other than $P_i$ two by two and calculate their cross product :\\ $detP= \vec{P_1} * \vec{P_2} $
+\\The gradient will be array of all these detP.
+\\\textit{Step 2:} (Renormalization of the flow)
+\\For each vertex $P_i$, the flow will be :
+\begin{center}
+$\vec{F}= \vec{H}- \frac{\vec{detP}. \vec{H}}{\vec{detP}. \vec{detP}}\vec{detP}$
+\end{center}
+\textbf{MeanCurvatureFlow:}
+\\ For each vertex,
+\\We used the following notations :
+\\ Q is the point we calculate the mcf for in each iteration
+\\$P_i$ is the predecessor of Q on face j, the successor of Q on face (j+1) and therefore the shared vertex of faces (j, j+1)
+\\$P_{i-1}$ is the successor of Q on face j
+\\$P_{i+i}$ is the predecessor of Q on face (j+1)
+\\$\vec{M_i}$ is the edge ($P_i$, Q)
+\\ We applied the following steps:
+\\- We find the first incident face f and the predecessor and the successor of Q in f 
+\\ - We iterate over the face in the right order by finding  the face show contain Q and its predecessor 
+\\- The flow will be:
+\begin{center}
+$mcf[i]=\frac{-1}{2}\sum_{f}^{} \frac{\vec{QP_{i-1}} *\vec{QP_{i-1}}}{||\vec{QP_{i-1}} *\vec{QP_{i-1}}||} * \vec{P_iP_{i-1}} $
+\end{center}
+\textbf{MeanCurvatureFlowCotan:}
+\\ For each vertex,
+\\We used the following notations :
+\\ Q is the point we calculate the mcf for in each iteration
+\\$P_i$ is the predecessor of Q on face j, the successor of Q on face (j+1) and therefore the shared vertex of faces (j, j+1)
+\\$P_{i-1}$ is the successor of Q on face j
+\\$P_{i+i}$ is the predecessor of Q on face (j+1)
+\\$\vec{M_i}$ is the edge ($P_i$, Q)
+\\ $angelbefore = (\vec{QP_{i-1}},\vec{P_{i-1}P_{i}})$
+\\ $angelafter = (\vec{P_iP_{i+1}},\vec{P_{i+1}Q})$
+\\ We applied the following steps:
+\\- We find the first incident face f and the predecessor and the successor of Q in f 
+\\ - We iterate over the face in the right order by finding  the face show contain Q and its predecessor 
+\\- The flow will be:
+\begin{center}
+$mcf[i]= \frac{1}{2}\sum_{f}^{} (\frac{1}{\tan angelbefore}+ \frac{1}{\tan after} ) * M_i$
+\end{center}
+\end{document}
