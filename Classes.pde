@@ -1,14 +1,20 @@
+/* class containing the data of a window:
+- the associated surface;
+- the menu buttons;
+- the kind of flow to apply;
+- the axis rotation;
+- the initial volume of the surface (before applying any flow)
+- the tau to use for this window
+*/
 class MyWinData extends GWinData {
     Surface S;
     GButton menuB;
-    int flow; //on va dire négatif c'est "en pause"
+    int flow; //negative = pause
     int rotaX = 0;
     int rotaY = 0;
     float initialVol = 0;
-    float tau = 0.1;
+    float tau = 0.005;
 }
-
-
 
 class Face {
   // faces are oriented
@@ -20,7 +26,6 @@ class Face {
     }
   }
 }
-
 
 class Surface {
   int nV;
@@ -156,57 +161,62 @@ class Surface {
 
   }
 
+  // returns the gradient of each vertex
   PVector[] gradient() {
 
     PVector[] grad = new PVector[nV];
     Face face;
     PVector p1, p2, g;
+    // degree of the face and index of P_i in f
     int degree, idx;
 
+    // for every vertex P_i
     for(int i=0; i<nV; i++) {
 
-      if (boundaryVertices.contains(i)) {
-        grad[i] = new PVector(0,0,0);
-      }
-      else {
+      g = new PVector(0,0,0);
 
-        g = new PVector(0,0,0);
+      // for every face containing P_i
+      for (int f=0; f<this.nF; f++) {
+        if(this.incidenceVF[i][f]) {
+          face = this.faces.get(f);
+          idx = face.vertices.indexOf(i);
+          degree = face.vertices.size();
 
-        for (int f=0; f<this.nF; f++) {
-          if(this.incidenceVF[i][f]) {
-            face = this.faces.get(f);
-            idx = face.vertices.indexOf(i);
-            degree = face.vertices.size();
-
-            for(int j=1; j<degree-1; j++) {
-              p1 = this.positions.get(face.vertices.get((idx+j) % degree));
-              p2 = this.positions.get(face.vertices.get((idx+j+1) % degree));
-              g.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
-            }
+          // add the cross product of every two consecutive vertices in F (divided by 6)
+          for(int j=1; j<degree-1; j++) {
+            p1 = this.positions.get(face.vertices.get((idx+j) % degree));
+            p2 = this.positions.get(face.vertices.get((idx+j+1) % degree));
+            g.add(p1.cross(p2).div(6));
           }
         }
-        grad[i] = g;
       }
+      grad[i] = g;
     }
     return grad;
   }
 
+  // harmonic flow (see report for details)
   PVector[] harmonicFlow() {
     PVector[] hf = new PVector[nV];
     PVector h = new PVector(0,0,0);
+    // number of neighbours
+    int n = 0;
 
     for (int i=0; i<nV; i++) {
       if (!boundaryVertices.contains(i)) {
         h.set(0,0,0);
-        int nA = 0;
+        n = 0;
         for(int j=0; j<nV; j++) {
-          if (adjacency[i][j] == true) {
-            nA++;
+          if (adjacency[i][j]) {
+            n++;
             h.add(positions.get(j));
           }
         }
-        h.div(nA);
+        h.div(n);
         hf[i] = h.copy();
+      }
+      else {
+        hf[i] = new PVector(0,0,0);
       }
     }
     return hf;
@@ -217,143 +227,47 @@ class Surface {
     PVector[] hf = new PVector[nV];
     PVector h = new PVector(0,0,0);
     ArrayList<PVector> neighbours;
+    // value of the area
     float A = 0;
+    // number of neighbours
     int nA;
     PVector Pi, Pj, Pjp1, tempA;
-    for(int i=0; i<nV; i++) {
-      //if(!boundaryVertices.contains(i))
-      h.set(0,0,0);
-      neighbours = new ArrayList<PVector>();
-      nA = 0;
-      for(int j=0; j<nV; j++) {
-        if (adjacency[i][j] == true) {
-          nA++;
-          neighbours.add(positions.get(j));
-          h.add(positions.get(j));
-        }
-      }
-      h.div(nA);
-      A = 0;
-      Pi = neighbours.get(0);
-      for(int j=1; j<nA-1; j++) {
-        Pj = neighbours.get(j);
-        Pjp1 = neighbours.get(j+1);
-        //area of triangle Pi - Pj - Pjp1 = (1/2) * ||Pi-Pj X Pj-Pjp1||
-        tempA = PVector.sub(Pj,Pi).cross(PVector.sub(Pjp1,Pj));
-        A += 0.5*(tempA.mag());
 
+    // for every vertex P_i
+    for(int i=0; i<nV; i++) {
+      if(!boundaryVertices.contains(i)) {
+        h.set(0,0,0);
+        neighbours = new ArrayList<PVector>();
+        nA = 0;
+        // compute the harmonic flow and store the neighbours
+        for(int j=0; j<nV; j++) {
+          if (adjacency[i][j]) {
+            nA++;
+            neighbours.add(positions.get(j));
+            h.add(positions.get(j));
+          }
+        }
+        h.div(nA);
+        A = 0;
+        Pi = neighbours.get(0);
+        for(int j=1; j<nA-1; j++) {
+          Pj = neighbours.get(j);
+          Pjp1 = neighbours.get(j+1);
+          //area of triangle Pi - Pj - Pjp1 = (1/2) * ||Pi-Pj X Pj-Pjp1||
+          tempA = PVector.sub(Pj,Pi).cross(PVector.sub(Pjp1,Pj));
+          A += 0.5*(tempA.mag());
+
+        }
+        h.div(A);
+        hf[i] = h.copy();
       }
-      h.div(A);
-      hf[i] = h.copy();
+      else {
+        hf[i] = new PVector(0,0,0);
+      }
     }
 
     return hf;
   }
-
-  PVector[] volumeConservationFlow() {
-    //gradient = chaque points : 1/6 somme des det des faces *** det qui peux étre reduit a q*r
-    ArrayList<PVector> gradient = new ArrayList<PVector>();
-    PVector[] resFlow = new PVector[nV];
-    ArrayList<PVector> actuV;
-    PVector bariCentre;
-    float multVal = 0;
-    float carreGradient = 0;
-
-    for(int i = 0; i < positions.size();i++) {
-
-      if(!boundaryVertices.contains(i)) {
-        //gradient
-
-        PVector detP = new PVector();
-        for(int f = 0; f < nF;f++) {
-          if(incidenceVF[i][f]) {
-            Face ff = faces.get(f);
-
-            int index = 0;
-
-            // get index of point i in face ff
-            for(int fff = 0; fff < ff.vertices.size();fff++) {
-              if(ff.vertices.get(fff) == i) {
-                index = fff;
-                break;
-              }
-            }
-            /*
-              println("liste = " + ff.vertices);
-              println("index = " + index);*/
-
-
-            for(int p = 1; p < ff.vertices.size()-1;p++) {
-              PVector p1 = positions.get(ff.vertices.get((index+p) % ff.vertices.size()));
-              PVector p2 = positions.get(ff.vertices.get((index+p+1) % ff.vertices.size()));
-              detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
-              /*
-              println("p1 = " + p1);
-              println("p2 = " + p2);
-              println("detP = " + detP);
-              */
-            }
-          }
-        }
-        gradient.add(detP);
-
-        // valeur pour renormalization
-        carreGradient += detP.x * detP.x + detP.y * detP.y + detP.z * detP.z;
-
-
-
-        //////////FLOW
-
-        // sum of all adjacent points
-        actuV = new ArrayList<PVector>();
-        for(int j = 0; j < positions.size();j++) {
-           if(adjacency[i][j]) {
-             actuV.add(positions.get(j));
-           }
-        }
-
-        bariCentre = new PVector();
-
-        for(int j = 0; j < actuV.size();j++) {
-          bariCentre.add(actuV.get(j));
-        }
-
-        bariCentre.div(actuV.size());
-        bariCentre.sub(positions.get(i));
-        //bariCentre.mult(tau);
-
-        resFlow[i] = bariCentre;
-
-        // renormalization
-        multVal += bariCentre.x * detP.x + bariCentre.y * detP.y + bariCentre.z * detP.z;
-
-      }
-    }
-
-
-
-
-      multVal = multVal / carreGradient;
-
-
-        println("gradient : " + gradient);
-        println("\n\n");
-        println("resFlow : " + resFlow);
-
-        println("multVal : " + multVal);
-        println("carreGradient : " + carreGradient);
-
-        println("flow : " + resFlow);
-
-      for(int i = 0; i < positions.size();i++) {
-        resFlow[i].sub(gradient.get(i).mult(multVal));
-      }
-
-      return resFlow;
-
-
-  }
-
 
   PVector[] meanCurvatureFlow() {
     PVector[] mcf = new PVector[nV];
@@ -625,252 +539,15 @@ class Surface {
 
   }
 
-//   void meanCurvatureFlowVolConstr() {
-//     PVector[] mcf = new PVector[nV];
-//     PVector[] gradient = new PVector[nV];
-//     float gradientNorm = 0;
-//     float multVal = 0;
-//     // Q is the point we calculate the mcf for in each iteration
-//     // P[i] is the successor of Q on face j, and the shared vertex of faces (j, j+1)
-//     // P[i-1] is the predecessor of Q on face j
-//     // P[i+i] is the successor of Q on face (j+1)
-//     // Mi is the edge (P[i], Q)
-//     PVector q, pim1, pi, pip1, Mi;
-//     int prevIdxPrevFace=-1, nextIdxPrevFace=-1, prevIdxCurrFace=-1, nextIdxCurrFace = -1;
-//     int firstFace=-1, prevFace=-1, currFace=-1;
-//     Face face;
-//     int degree;
-//     int idx;
-//     int f;
-//     // angleBefore is the angle (Q, P[i-1], P[i])
-//     // angleAfter is the angle (Q, P[i+1], P[i])
-//     // A[i] = cotan(angleBefore) + cotan(angleAfter)
-//     float angleBefore, angleAfter, Ai;
-//     PVector e1, e2;
-//     boolean found, cycle;
-//     for (int i=0; i<nV; i++) {
-//       PVector detP = new PVector(0,0,0);
-//       q = positions.get(i);
-//       // initialize its mcf to 0
-//       mcf[i] = new PVector(0,0,0);
-//       //find a face containing point Q
-//       firstFace = 0;
-//       found = false;
-//       f = 0;
-//       while (!found) {
-//         if (incidenceVF[i][f]) {
-//           found = true;
-//           face = faces.get(f);
-//           degree = face.vertices.size();
-//           // index of Q in the face
-//           idx = face.vertices.indexOf(i);
-//           if (idx == 0)
-//             prevIdxCurrFace = degree-1;
-//           else
-//             prevIdxCurrFace = idx-1;
-//           prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
-//           nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-//           firstFace = f;
-//           prevFace = f;
-//
-//           // gradient
-//           for(int p=1; p<degree-1; p++) {
-//             PVector p1 = positions.get(face.vertices.get((idx+p) % degree));
-//             PVector p2 = positions.get(face.vertices.get((idx+p+1) % degree));
-//             detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
-//             //println("while 1");
-//           }
-//         } else {
-//           f++;
-//         }
-//       }
-//
-//       currFace = -1;
-//       // have we ended up on the initial face, closing the loop?
-//       cycle = false;
-//       // cycle over all faces containing point Q in the right order
-//       // (using the information about the next point in the current face
-//       // to find the face they share)
-//       while (!cycle) {
-//         f = 0;
-//         found = false;
-//         // find the other shared face between Q and its successor
-//         while (!found) {
-//           if (incidenceVF[i][f] && incidenceVF[nextIdxCurrFace][f] && f!=prevFace) {
-//             found = true;
-//             face = faces.get(f);
-//             degree = face.vertices.size();
-//             idx = face.vertices.indexOf(i);
-//             // update previous/current relations
-//             currFace = f;
-//             prevIdxPrevFace = prevIdxCurrFace;
-//             nextIdxPrevFace = nextIdxCurrFace;
-//             // possible error source, but should be always verified:
-//             // prevIdxCurrFace = nextIdxPrevFace;
-//             if (idx == 0)
-//               prevIdxCurrFace = degree-1;
-//             else
-//               prevIdxCurrFace = idx-1;
-//             prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
-//             nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-//             // gradient
-//             for(int p = 1; p < degree-1;p++) {
-//               PVector p1 = positions.get(face.vertices.get((idx+p) % degree));
-//               PVector p2 = positions.get(face.vertices.get((idx+p+1) % degree));
-//               detP.add(p1.cross(p2)); // pas divisé par 6 (car pas utile)
-//               //println("while 2");
-//             }
-//           }
-//           else {
-//             f++;
-//           }
-//         }
-//         // at this point we have found the next face and update every other vertex
-//         pim1 = positions.get(prevIdxPrevFace);
-//         pi = positions.get(nextIdxPrevFace);
-//         pip1 = positions.get(nextIdxCurrFace);
-//         Mi = PVector.sub(q,pi);
-//         angleBefore = PVector.angleBetween(PVector.sub(pim1,q), PVector.sub(pi,pim1));
-//         // e1 = PVector.sub(pim1,q);
-//         // e2 = PVector.sub(pi,pim1);
-//         // angleBefore = acos((e1.dot(e2))/(e1.mag()*e2.mag()));
-//         angleAfter = PVector.angleBetween(PVector.sub(pip1,pi), PVector.sub(q,pip1));
-//         // e1 = PVector.sub(pip1,pi);
-//         // e2 = PVector.sub(q,pip1);
-//         // angleAfter = acos((e1.dot(e2))/(e1.mag()*e2.mag()));
-//         Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
-//         Mi.mult(Ai/2);
-//         mcf[i].add(Mi);
-//
-//         prevFace = currFace;
-//         // check if we the face we just visited is also the one we started with
-//         // (in this case, job done)
-//         if (currFace == firstFace)
-//           cycle = true;
-//       }
-//       gradient[i] = detP;
-//       gradientNorm += detP.x * detP.x + detP.y * detP.y + detP.z * detP.z;
-//       multVal += mcf[i].x * detP.x + mcf[i].y * detP.y + mcf[i].z * detP.z;
-//
-//       // println("point: " + i);
-//       // println("gradientNorm: " + gradientNorm);
-//       // println("multVal: " + multVal);
-//     }
-//
-//     multVal = multVal/gradientNorm;
-//     for(int i=0; i < nV; i++) {
-//       mcf[i].sub(gradient[i].mult(multVal));
-//     }
-//
-//     for(int i=0; i<nV; i++) {
-//       positions.get(i).add(mcf[i].mult(tau));
-//     }
-//
-//     println(volume());
-//
-//   }
-//
-//
-// void squarMeanCurvatureFlow(MyWinData d) {
-//     float tau = d.tau;
-//     PVector[] smcf = new PVector[nV];
-//     PVector[] mcf = new PVector[nV];
-//     PVector q, pim1, pi, pip1, Mi;
-//     int prevIdxPrevFace=-1, nextIdxPrevFace=-1, prevIdxCurrFace=-1, nextIdxCurrFace = -1;
-//     int firstFace=-1, prevFace=-1, currFace=-1;
-//     Face face;
-//     int degree;
-//     int idx;
-//     int f;
-//     float angleBefore, angleAfter, Ai;
-//     boolean found, cycle;
-//     //int neighbor = -1;
-//     for (int i=0; i<nV; i++) {
-//       mcf[i] = new PVector(0,0,0);
-//       q = positions.get(i);
-//       //if(!boundaryVertices.contains(i)){
-//
-//       //find a face of Pi
-//       firstFace = 0;
-//       found = false;
-//       f = 0;
-//       while (!found) {
-//         if (incidenceVF[i][f]) {
-//           found = true;
-//           face = faces.get(f);
-//           degree = face.vertices.size();
-//           idx = face.vertices.indexOf(i);
-//           nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-//           if (idx == 0)
-//             prevIdxCurrFace = degree-1;
-//           else
-//             prevIdxCurrFace = idx-1;
-//           firstFace = f;
-//           prevFace = f;
-//         } else {
-//           f++;
-//         }
-//       }
-//
-//       currFace = -1;
-//       cycle = false;
-//       // cycle over all faces of P[i] in the right order
-//       // using the information about the next point in the current face
-//       while (!cycle) {
-//         f = 0;
-//         found = false;
-//         // find the shared face between P[i] and its successor
-//         while (!found) {
-//           if (incidenceVF[i][f] && incidenceVF[nextIdxCurrFace][f] && f!=prevFace) {
-//             found = true;
-//             face = faces.get(f);
-//             degree = face.vertices.size();
-//             idx = face.vertices.indexOf(i);
-//             prevIdxPrevFace = prevIdxCurrFace;
-//             nextIdxPrevFace = nextIdxCurrFace;
-//             prevIdxCurrFace = nextIdxPrevFace;
-//             nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-//           }
-//           else {
-//             f++;
-//           }
-//         }
-//         // we have found the next face
-//         pim1 = positions.get(prevIdxPrevFace);
-//         pi = positions.get(nextIdxPrevFace);
-//         pip1 = positions.get(nextIdxCurrFace);
-//         Mi = PVector.sub(q,pi);
-//         angleBefore = PVector.angleBetween(PVector.sub(pim1,q), PVector.sub(pi,pim1));
-//         //println(angleBefore);
-//         if (angleBefore < -PI)
-//           angleBefore += 2*PI;
-//         else if (angleBefore > PI)
-//           angleBefore -= 2*PI;
-//         angleAfter = PVector.angleBetween(PVector.sub(pip1,pi), PVector.sub(q,pip1));
-//         if (angleAfter < -PI)
-//           angleAfter += 2*PI;
-//         else if (angleAfter > PI)
-//           angleAfter -= 2*PI;
-//         Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
-//         //println(Ai);
-//         Mi.mult(Ai);
-//         mcf[i].sub(Mi);
-//
-//         // before looking for a new face
-//         prevFace = currFace;
-//         prevIdxPrevFace = prevIdxCurrFace;
-//         nextIdxPrevFace = nextIdxCurrFace;
-//         if (currFace == firstFace)
-//           cycle = true;
-//       }
-//     }
-//     for(int i=0; i<nV; i++) {
-//       float a = mcf[i].mag();
-//       smcf[i]= mcf[i].mult(a);
-//     }
-//     for(int i=0; i<nV; i++) {
-//       positions.get(i).add(smcf[i].mult(tau));
-//     }
-//   }
+  PVector[] squaredMeanCurvatureFlow() {
+    PVector[] smcf = meanCurvatureFlow();
+
+    for(int i=0; i<nV; i++) {
+      smcf[i] = smcf[i].mult(smcf[i].mag());
+    }
+
+    return smcf;
+
+  }
 
 }

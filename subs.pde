@@ -26,10 +26,10 @@ void drawFace(Surface S, int faceIndex, int theStroke, int theFill, PApplet g) {
   g.endShape();
 }
 
+// apply a flow to the surface of a given window
 void applyFlow(MyWinData data) {
   Surface S = data.S;
-  int flow = data.flow % 10;
-  int renormalizationType = data.flow / 10;
+  int flow = data.flow;
   float tau = data.tau;
   float initialVol = data.initialVol;
   switch(flow) {
@@ -51,9 +51,18 @@ void applyFlow(MyWinData data) {
     case 6:
       applyFlowProj(S,S.harmonicAreaFlow(),initialVol,tau);
       break;
+    case 7:
+      applyFlowRenorm(S,S.squaredMeanCurvatureFlow(),initialVol,tau);
+      break;
+    case 8:
+      applyFlowProj(S,S.squaredMeanCurvatureFlow(),initialVol,tau);
+      break;
+    default:
+      break;
   }
 }
 
+// apply the flow after projecting it on the volume constraints
 void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
 
   PVector[] grad = S.gradient();
@@ -82,18 +91,19 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
   }
 
   // apply renormalization if the volume varied too much due to numerical errors
-  // volAfter = S.volume();
-  // if (abs(initialVol-volAfter) > 0.1) {
-  //   println("WARNING: the volume is not conserved, applying manual conservation");
-  //   println(abs(initialVol-volAfter));
-  //   float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
-  //   for(int i=0; i<S.nV; i++) {
-  //     S.positions.get(i).mult(ratio);
-  //   }
-  // }
+  volAfter = S.volume();
+  if (abs(initialVol-volAfter) > 0.1) {
+    println("WARNING: the volume is not conserved, applying manual conservation");
+    println(abs(initialVol-volAfter));
+    float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
+    for(int i=0; i<S.nV; i++) {
+      S.positions.get(i).mult(ratio);
+    }
+  }
 
 }
 
+// apply the flow after normalizing it to keep the volume constant with respect to the original value
 void applyFlowRenorm(Surface S, PVector[] flow, float initialVol, float tau) {
 
   for (int i=0; i<S.nV; i++) {
