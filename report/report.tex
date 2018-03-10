@@ -61,7 +61,7 @@ allowing to modify the following parameters:
     \item harmonic with division by the area and volume renormalization;
     \item harmonic with division by the area and projection on the volume constraints;
   \end{enumerate}
-  \item the value of ``tau'', a float $0 \leq \tau \leq 1$ representing the scaling factor applied to the flow;
+  \item the value of ``tau'', a float $0 < \tau \leq 1$ representing the scaling factor applied to the flow;
   \item the PLY file to use, with examples provided in the data directory;
   \item the activity of the flow on the current window,
     allowing to stop the flow on it even if start flow was pressed in the main menu.
@@ -76,8 +76,8 @@ allowing to modify the following parameters:
 \end{figure}
 
 At creation, a window opens the cube surface, with no flow applied and $\tau = 0.005$.
-Once created, the windows cannot be closed. To disable the flow on a window,
-choose a negative integer.
+Once created, the windows cannot be closed. To disable/enable the flow on a window,
+click on the ``Active/Inactive'' button.
 
 The value of $\tau$ is parsed as a float, so it is expected to be a floating point
 number in the standard notation.
@@ -185,5 +185,22 @@ For each vertex $p_i$, the flow $F_i$ will be updated to:
     {||\overrightarrow{G_i}||}
   \overrightarrow{G_i}
 \end{equation*}
+
+\section*{Examples}
+Meaningful examples are given in the form of GIF animations for some of the surfaces.
+They can be found in the gifs directory of the repository.
+
+\section*{Conclusions}
+The mean curvature flow and its squared variant yield the best results, but
+unfortunately none of the implementations manage to keep the original topology of
+all surfaces. On complex surfaces, like the mug example, the results are
+not as good as expected (no ``smoothing'' effect), but still the computations
+are numerically stable enough not to end up in geometrically ill behaviours,
+unless the value of $\tau$ is too high.
+
+The biggest improvement was brought by the implementation of the projection
+on the volume constraints, which improved the stability of all flows.
+A possible improvement is a method to check that vertices do not cross other
+faces, but this would add a huge complexity to the calculations, time and space-wise.
 
 \end{document}
