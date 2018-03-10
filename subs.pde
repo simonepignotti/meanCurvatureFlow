@@ -75,30 +75,14 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
   for (int i=0; i<S.nV; i++) {
     g = grad[i];
     f = flow[i];
-    gNorm = g.x * g.x + g.y * g.y + g.z * g.z;;
+    gNorm = g.x * g.x + g.y * g.y + g.z * g.z;
     dotP = f.x*g.x + f.y*g.y + f.z*g.z;
     dotP /= gNorm;
-    // equivalent:
-    // gNorm = g.mag();
-    // dotP = f.dot(g)/gNorm;
-    // println(f);
-    // println(PVector.mult(g, dotP));
     newFlow[i] = PVector.sub(f,PVector.mult(g, dotP)).mult(tau);
   }
 
   for (int i=0; i<S.nV; i++) {
     S.positions.get(i).add(newFlow[i]);
-  }
-
-  // apply renormalization if the volume varied too much due to numerical errors
-  volAfter = S.volume();
-  if (abs(initialVol-volAfter) > 0.1) {
-    println("WARNING: the volume is not conserved, applying manual conservation");
-    println(abs(initialVol-volAfter));
-    float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
-    for(int i=0; i<S.nV; i++) {
-      S.positions.get(i).mult(ratio);
-    }
   }
 
 }

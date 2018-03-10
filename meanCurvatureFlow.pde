@@ -1,19 +1,19 @@
 import g4p_controls.*;
 
+// maximum number of vertices, edges and faces
 int nVmax = 2000;
 int nEmax = 2000;
 int nFmax = 3500;
 
+// maximum number of open windows
 int maxS = 6;
 
-
-/**/
+// values to bound the flows
 float maxFlowComp = 100;
 Float pInfiniteFloat = Float.POSITIVE_INFINITY;
 Float nInfiniteFloat = Float.NEGATIVE_INFINITY;
-/**/
 
-
+// interface buttons and fields
 GButton btnStart;
 GButton btnFlow;
 
@@ -26,6 +26,7 @@ GButton endEdit;
 GTextField flowT;
 GTextField tauT;
 
+// bool to start/stop the flows on all windows
 boolean flowing = false;
 
 //tableau des fenetres
@@ -38,9 +39,6 @@ void setup() {
   surfaces = new MyWinData[maxS];
   btnStart = new GButton(this, 20, 30, 80, 80, "NEW");
   btnFlow = new GButton(this, 20, 150, 80, 80, "Start flow");
-
-
-  //EDITING
 
   editFlow = new GButton(this, 40, 30, 120, 90, "Flow type");
   editTau = new GButton(this, 250, 30, 120, 90, "Tau factor");
@@ -55,18 +53,14 @@ void setup() {
   flowT.setPromptText("new flow value");
   tauT.setPromptText("new tau value");
 
-  //EDITING
-
   buttonsVisibility(true);
 }
 
 void draw() {
-  if(editing == 0)
-    background(230, 230, 230);
   background(130, 130, 130);
 }
 
-//change de menu, en changeant la visibilité des bouttons
+// change menu (by changing buttons visibility)
 void buttonsVisibility(boolean menu) {
     btnStart.setVisible(menu);
     btnFlow.setVisible(menu);
@@ -87,7 +81,7 @@ void buttonsVisibility(boolean menu) {
 
 }
 
-// réactualise les titres des bouttons
+// update button labels
 void refreshFlowButtons() {
     if(editing >= 0) {
         if(surfaces[editing].flow > 0)
@@ -100,7 +94,7 @@ void refreshFlowButtons() {
 }
 
 
-// réagie aux interaction utilisation (affécte une fonction a chaque bouton)
+// handle the events associated to each button
 public void handleButtonEvents(GButton button, GEvent event) {
     if (btnStart == button) {
         println("new surface.");
@@ -202,7 +196,7 @@ public void handleButtonEvents(GButton button, GEvent event) {
     }
 }
 
-// réactualise la position de la sourie si le boutton est activer
+// update mouse position if the button is active
 public void windowMouse(PApplet appc, GWinData data, MouseEvent event) {
     MyWinData d = (MyWinData)data;
     switch(event.getAction()) {
@@ -217,7 +211,7 @@ public void windowMouse(PApplet appc, GWinData data, MouseEvent event) {
     }
 }
 
-// permet de zoomer et dézoomer dans les fenetres d'affichages
+// zoom in and out funcionality
 public void windowKey(PApplet appc, GWinData data, KeyEvent ev) {
     MyWinData d = (MyWinData)data;
     if(ev.getAction() == KeyEvent.PRESS) {
@@ -238,7 +232,7 @@ public void windowKey(PApplet appc, GWinData data, KeyEvent ev) {
     }
 }
 
-// affichages
+// draw a window
 public void windowDraw(PApplet appc, GWinData data) { // width partout
     MyWinData d = (MyWinData)data;
     appc.background(50);
@@ -259,7 +253,7 @@ public void windowDraw(PApplet appc, GWinData data) { // width partout
     d.S.drawSurface(appc);
 }
 
-// création d'une nouvelle fenetre
+// create a window
 public void surfaceWindow() {
   if(nbS >= maxS) {
       println("max surfaces, no more creation");

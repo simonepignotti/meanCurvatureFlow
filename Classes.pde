@@ -110,6 +110,7 @@ class Surface {
       }
     }
 
+    // add all boundary vertices to an array to speed up boundary checks
     for (int j=0; j<this.nV; j++) {
       if (isBoundaryVertex(j))
         boundaryVertices.add(j);
@@ -222,7 +223,7 @@ class Surface {
     return hf;
   }
 
-  //harmonic flow divided by the area
+  // harmonic flow divided by the area
   PVector[] harmonicAreaFlow() {
     PVector[] hf = new PVector[nV];
     PVector h = new PVector(0,0,0);
@@ -287,111 +288,116 @@ class Surface {
     boolean found, cycle;
 
     for (int i=0; i<nV; i++) {
-      q = positions.get(i);
-      // initialize its mcf to 0
-      mcf[i] = new PVector(0,0,0);
-      //find a face containing point Q
-      firstFace = 0;
-      found = false;
-      f = 0;
-      while (!found) {
-        if (incidenceVF[i][f]) {
-          found = true;
-          face = faces.get(f);
-          degree = face.vertices.size();
-          // index of Q in the face
-          idx = face.vertices.indexOf(i);
-          if (idx == 0)
-            prevIdxCurrFace = degree-1;
-          else
-            prevIdxCurrFace = idx-1;
-          prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
-          nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-          firstFace = f;
-          prevFace = f;
-        } else {
-          f++;
-        }
-      }
-
-      currFace = -1;
-      // have we ended up on the initial face, closing the loop?
-      cycle = false;
-      // cycle over all faces containing point Q in the right order
-      // (using the information about the previous point in the current face
-      // to find the face they share)
-      while (!cycle) {
-        f = 0;
+      if (!boundaryVertices.contains(i)) {
+        q = positions.get(i);
+        // initialize its mcf to 0
+        mcf[i] = new PVector(0,0,0);
+        //find a face containing point Q
+        firstFace = 0;
         found = false;
-        // find the other shared face between Q and its predecessor
+        f = 0;
         while (!found) {
-          if (incidenceVF[i][f] && incidenceVF[prevIdxCurrFace][f] && f!=prevFace) {
+          if (incidenceVF[i][f]) {
             found = true;
             face = faces.get(f);
             degree = face.vertices.size();
+            // index of Q in the face
             idx = face.vertices.indexOf(i);
-            // update previous/current relations
-            currFace = f;
-            prevIdxPrevFace = prevIdxCurrFace;
-            nextIdxPrevFace = nextIdxCurrFace;
             if (idx == 0)
               prevIdxCurrFace = degree-1;
             else
               prevIdxCurrFace = idx-1;
             prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
             nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-          }
-          else {
+            firstFace = f;
+            prevFace = f;
+          } else {
             f++;
           }
         }
-        // at this point we have found the next face and update every other vertex
-        pim1 = positions.get(nextIdxPrevFace);
-        pi = positions.get(prevIdxPrevFace);
-        pip1 = positions.get(prevIdxCurrFace);
-        Mi = PVector.sub(pip1,pi);
-        qpi = PVector.sub(pi,q);
-        qpip1 = PVector.sub(pip1,q);
-        N = qpi.cross(qpip1);
-        N.div(N.mag());
-        Mi = N.cross(Mi).mult(-0.5);
 
-        boolean infiniteComp = false;
-        if (pInfiniteFloat.isInfinite(Mi.x) || pInfiniteFloat.isInfinite(Mi.y) || pInfiniteFloat.isInfinite(Mi.z)) {
-          println("WARNING: INFINITE COMPONENT ON POINT " + i);
-          infiniteComp = true;
-        }
-
-        if (pInfiniteFloat.isNaN(Mi.x) || pInfiniteFloat.isNaN(Mi.y) || pInfiniteFloat.isNaN(Mi.z)) {
-          println("WARNING: NaN COMPONENT ON POINT " + i);
-          infiniteComp = true;
-        }
-
-        if (!infiniteComp) {
-          if (abs(Mi.x) > maxFlowComp) {
-            float ratioComp = maxFlowComp/abs(Mi.x);
-            Mi.mult(ratioComp);
-            // Mi.set(maxFlowComp*Math.signum(Mi.x),Mi.y,Mi.z);
+        currFace = -1;
+        // have we ended up on the initial face, closing the loop?
+        cycle = false;
+        // cycle over all faces containing point Q in the right order
+        // (using the information about the previous point in the current face
+        // to find the face they share)
+        while (!cycle) {
+          f = 0;
+          found = false;
+          // find the other shared face between Q and its predecessor
+          while (!found) {
+            if (incidenceVF[i][f] && incidenceVF[prevIdxCurrFace][f] && f!=prevFace) {
+              found = true;
+              face = faces.get(f);
+              degree = face.vertices.size();
+              idx = face.vertices.indexOf(i);
+              // update previous/current relations
+              currFace = f;
+              prevIdxPrevFace = prevIdxCurrFace;
+              nextIdxPrevFace = nextIdxCurrFace;
+              if (idx == 0)
+                prevIdxCurrFace = degree-1;
+              else
+                prevIdxCurrFace = idx-1;
+              prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
+              nextIdxCurrFace = face.vertices.get((idx+1)%degree);
+            }
+            else {
+              f++;
+            }
           }
-          if (abs(Mi.y) > maxFlowComp) {
-            float ratioComp = maxFlowComp/abs(Mi.y);
-            Mi.mult(ratioComp);
-            // Mi.set(Mi.x,maxFlowComp*Math.signum(Mi.y),Mi.z);
-          }
-          if (abs(Mi.z) > maxFlowComp) {
-            float ratioComp = maxFlowComp/abs(Mi.z);
-            Mi.mult(ratioComp);
-            // Mi.set(Mi.x,Mi.y,maxFlowComp*Math.signum(Mi.z));
+          // at this point we have found the next face and update every other vertex
+          pim1 = positions.get(nextIdxPrevFace);
+          pi = positions.get(prevIdxPrevFace);
+          pip1 = positions.get(prevIdxCurrFace);
+          Mi = PVector.sub(pip1,pi);
+          qpi = PVector.sub(pi,q);
+          qpip1 = PVector.sub(pip1,q);
+          N = qpi.cross(qpip1);
+          N.div(N.mag());
+          Mi = N.cross(Mi).mult(-0.5);
+
+          boolean infiniteComp = false;
+          if (pInfiniteFloat.isInfinite(Mi.x) || pInfiniteFloat.isInfinite(Mi.y) || pInfiniteFloat.isInfinite(Mi.z)) {
+            println("WARNING: INFINITE COMPONENT ON POINT " + i);
+            infiniteComp = true;
           }
 
-          mcf[i].add(Mi);
+          if (pInfiniteFloat.isNaN(Mi.x) || pInfiniteFloat.isNaN(Mi.y) || pInfiniteFloat.isNaN(Mi.z)) {
+            println("WARNING: NaN COMPONENT ON POINT " + i);
+            infiniteComp = true;
+          }
+
+          if (!infiniteComp) {
+            if (abs(Mi.x) > maxFlowComp) {
+              float ratioComp = maxFlowComp/abs(Mi.x);
+              Mi.mult(ratioComp);
+              // Mi.set(maxFlowComp*Math.signum(Mi.x),Mi.y,Mi.z);
+            }
+            if (abs(Mi.y) > maxFlowComp) {
+              float ratioComp = maxFlowComp/abs(Mi.y);
+              Mi.mult(ratioComp);
+              // Mi.set(Mi.x,maxFlowComp*Math.signum(Mi.y),Mi.z);
+            }
+            if (abs(Mi.z) > maxFlowComp) {
+              float ratioComp = maxFlowComp/abs(Mi.z);
+              Mi.mult(ratioComp);
+              // Mi.set(Mi.x,Mi.y,maxFlowComp*Math.signum(Mi.z));
+            }
+
+            mcf[i].add(Mi);
+          }
+
+          prevFace = currFace;
+          // check if we the face we just visited is also the one we started with
+          // (in this case, job done)
+          if (currFace == firstFace)
+            cycle = true;
         }
-
-        prevFace = currFace;
-        // check if we the face we just visited is also the one we started with
-        // (in this case, job done)
-        if (currFace == firstFace)
-          cycle = true;
+      }
+      else {
+        mcf[i] = new PVector(0,0,0);
       }
     }
 
@@ -420,118 +426,123 @@ class Surface {
     float angleBefore, angleAfter, Ai;
     boolean found, cycle;
     for (int i=0; i<nV; i++) {
-      q = positions.get(i);
-      // initialize its mcf to 0
-      mcf[i] = new PVector(0,0,0);
-      //find a face containing point Q
-      firstFace = 0;
-      found = false;
-      f = 0;
-      while (!found) {
-        if (incidenceVF[i][f]) {
-          found = true;
-          face = faces.get(f);
-          degree = face.vertices.size();
-          // index of Q in the face
-          idx = face.vertices.indexOf(i);
-          if (idx == 0)
-            prevIdxCurrFace = degree-1;
-          else
-            prevIdxCurrFace = idx-1;
-          prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
-          nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-          firstFace = f;
-          prevFace = f;
-        } else {
-          f++;
-        }
-      }
-
-      currFace = -1;
-      // have we ended up on the initial face, closing the loop?
-      cycle = false;
-      // cycle over all faces containing point Q in the right order
-      // (using the information about the previous point in the current face
-      // to find the face they share)
-      while (!cycle) {
-        f = 0;
+      if(!boundaryVertices.contains(i)) {
+        q = positions.get(i);
+        // initialize its mcf to 0
+        mcf[i] = new PVector(0,0,0);
+        //find a face containing point Q
+        firstFace = 0;
         found = false;
-        // find the other shared face between Q and its predecessor
+        f = 0;
         while (!found) {
-          if (incidenceVF[i][f] && incidenceVF[prevIdxCurrFace][f] && f!=prevFace) {
+          if (incidenceVF[i][f]) {
             found = true;
             face = faces.get(f);
             degree = face.vertices.size();
+            // index of Q in the face
             idx = face.vertices.indexOf(i);
-            // update previous/current relations
-            currFace = f;
-            prevIdxPrevFace = prevIdxCurrFace;
-            nextIdxPrevFace = nextIdxCurrFace;
             if (idx == 0)
               prevIdxCurrFace = degree-1;
             else
               prevIdxCurrFace = idx-1;
             prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
             nextIdxCurrFace = face.vertices.get((idx+1)%degree);
-          }
-          else {
+            firstFace = f;
+            prevFace = f;
+          } else {
             f++;
           }
         }
-        // at this point we have found the next face and update every other vertex
-        pim1 = positions.get(nextIdxPrevFace);
-        pi = positions.get(prevIdxPrevFace);
-        pip1 = positions.get(prevIdxCurrFace);
-        Mi = PVector.sub(q,pi);
-        angleBefore = PVector.angleBetween(PVector.sub(pim1,q), PVector.sub(pi,pim1));
-        angleAfter = PVector.angleBetween(PVector.sub(pip1,pi), PVector.sub(q,pip1));
 
-        Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
-        Mi.mult(Ai/2);
-        // Mi.mult(Ai/(2*starQ));
-        if (angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
-          println("point: " + i);
-          println("angleBefore: " + angleBefore);
-          println("angleAfter: " + angleAfter);
-          println("flowContribution: " + Mi);
-        }
-
-        boolean infiniteComp = false;
-        if (pInfiniteFloat.isInfinite(Mi.x) || pInfiniteFloat.isInfinite(Mi.y) || pInfiniteFloat.isInfinite(Mi.z)) {
-          println("WARNING: INFINITE COMPONENT ON POINT " + i);
-          infiniteComp = true;
-        }
-
-        if (pInfiniteFloat.isNaN(Mi.x) || pInfiniteFloat.isNaN(Mi.y) || pInfiniteFloat.isNaN(Mi.z)) {
-          println("WARNING: NaN COMPONENT ON POINT " + i);
-          infiniteComp = true;
-        }
-
-        if (!infiniteComp) {
-          if (abs(Mi.x) > maxFlowComp) {
-            float ratioComp = maxFlowComp/abs(Mi.x);
-            Mi.mult(ratioComp);
-            // Mi.set(maxFlowComp*Math.signum(Mi.x),Mi.y,Mi.z);
+        currFace = -1;
+        // have we ended up on the initial face, closing the loop?
+        cycle = false;
+        // cycle over all faces containing point Q in the right order
+        // (using the information about the previous point in the current face
+        // to find the face they share)
+        while (!cycle) {
+          f = 0;
+          found = false;
+          // find the other shared face between Q and its predecessor
+          while (!found) {
+            if (incidenceVF[i][f] && incidenceVF[prevIdxCurrFace][f] && f!=prevFace) {
+              found = true;
+              face = faces.get(f);
+              degree = face.vertices.size();
+              idx = face.vertices.indexOf(i);
+              // update previous/current relations
+              currFace = f;
+              prevIdxPrevFace = prevIdxCurrFace;
+              nextIdxPrevFace = nextIdxCurrFace;
+              if (idx == 0)
+                prevIdxCurrFace = degree-1;
+              else
+                prevIdxCurrFace = idx-1;
+              prevIdxCurrFace = face.vertices.get(prevIdxCurrFace);
+              nextIdxCurrFace = face.vertices.get((idx+1)%degree);
+            }
+            else {
+              f++;
+            }
           }
-          if (abs(Mi.y) > maxFlowComp) {
-            float ratioComp = maxFlowComp/abs(Mi.y);
-            Mi.mult(ratioComp);
-            // Mi.set(Mi.x,maxFlowComp*Math.signum(Mi.y),Mi.z);
-          }
-          if (abs(Mi.z) > maxFlowComp) {
-            float ratioComp = maxFlowComp/abs(Mi.z);
-            Mi.mult(ratioComp);
-            // Mi.set(Mi.x,Mi.y,maxFlowComp*Math.signum(Mi.z));
+          // at this point we have found the next face and update every other vertex
+          pim1 = positions.get(nextIdxPrevFace);
+          pi = positions.get(prevIdxPrevFace);
+          pip1 = positions.get(prevIdxCurrFace);
+          Mi = PVector.sub(q,pi);
+          angleBefore = PVector.angleBetween(PVector.sub(pim1,q), PVector.sub(pi,pim1));
+          angleAfter = PVector.angleBetween(PVector.sub(pip1,pi), PVector.sub(q,pip1));
+
+          Ai = 1/tan(angleBefore) + 1/tan(angleAfter);
+          Mi.mult(Ai/2);
+          // Mi.mult(Ai/(2*starQ));
+          if (angleBefore > PI-0.0001 || angleBefore < 0.0001 || angleAfter > PI-0.0001 || angleAfter < 0.0001) {
+            println("point: " + i);
+            println("angleBefore: " + angleBefore);
+            println("angleAfter: " + angleAfter);
+            println("flowContribution: " + Mi);
           }
 
-          mcf[i].add(Mi);
+          boolean infiniteComp = false;
+          if (pInfiniteFloat.isInfinite(Mi.x) || pInfiniteFloat.isInfinite(Mi.y) || pInfiniteFloat.isInfinite(Mi.z)) {
+            println("WARNING: INFINITE COMPONENT ON POINT " + i);
+            infiniteComp = true;
+          }
+
+          if (pInfiniteFloat.isNaN(Mi.x) || pInfiniteFloat.isNaN(Mi.y) || pInfiniteFloat.isNaN(Mi.z)) {
+            println("WARNING: NaN COMPONENT ON POINT " + i);
+            infiniteComp = true;
+          }
+
+          if (!infiniteComp) {
+            if (abs(Mi.x) > maxFlowComp) {
+              float ratioComp = maxFlowComp/abs(Mi.x);
+              Mi.mult(ratioComp);
+              // Mi.set(maxFlowComp*Math.signum(Mi.x),Mi.y,Mi.z);
+            }
+            if (abs(Mi.y) > maxFlowComp) {
+              float ratioComp = maxFlowComp/abs(Mi.y);
+              Mi.mult(ratioComp);
+              // Mi.set(Mi.x,maxFlowComp*Math.signum(Mi.y),Mi.z);
+            }
+            if (abs(Mi.z) > maxFlowComp) {
+              float ratioComp = maxFlowComp/abs(Mi.z);
+              Mi.mult(ratioComp);
+              // Mi.set(Mi.x,Mi.y,maxFlowComp*Math.signum(Mi.z));
+            }
+
+            mcf[i].add(Mi);
+          }
+
+          prevFace = currFace;
+          // check if we the face we just visited is also the one we started with
+          // (in this case, job done)
+          if (currFace == firstFace)
+            cycle = true;
         }
-
-        prevFace = currFace;
-        // check if we the face we just visited is also the one we started with
-        // (in this case, job done)
-        if (currFace == firstFace)
-          cycle = true;
+      }
+      else {
+        mcf[i] = new PVector(0,0,0);
       }
     }
 
