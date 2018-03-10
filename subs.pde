@@ -40,23 +40,24 @@ void applyFlow(MyWinData data) {
       applyFlowProj(S,S.meanCurvatureFlow(),initialVol,tau);
       break;
     case 3:
-      applyFlowRenorm(S,S.harmonicFlow(),initialVol,tau);
-      break;
-    case 4:
-      applyFlowProj(S,S.harmonicFlow(),initialVol,tau);
-      break;
-    case 5:
-      applyFlowRenorm(S,S.harmonicAreaFlow(),initialVol,tau);
-      break;
-    case 6:
-      applyFlowProj(S,S.harmonicAreaFlow(),initialVol,tau);
-      break;
-    case 7:
       applyFlowRenorm(S,S.squaredMeanCurvatureFlow(),initialVol,tau);
       break;
-    case 8:
+    case 4:
       applyFlowProj(S,S.squaredMeanCurvatureFlow(),initialVol,tau);
       break;
+    case 5:
+      applyFlowRenorm(S,S.harmonicFlow(),initialVol,tau);
+      break;
+    case 6:
+      applyFlowProj(S,S.harmonicFlow(),initialVol,tau);
+      break;
+    case 7:
+      applyFlowRenorm(S,S.harmonicAreaFlow(),initialVol,tau);
+      break;
+    case 8:
+      applyFlowProj(S,S.harmonicAreaFlow(),initialVol,tau);
+      break;
+
     default:
       break;
   }
@@ -82,7 +83,8 @@ void applyFlowProj(Surface S, PVector[] flow, float initialVol, float tau) {
   }
 
   for (int i=0; i<S.nV; i++) {
-    S.positions.get(i).add(newFlow[i]);
+    if (!S.boundaryVertices.contains(i))
+      S.positions.get(i).add(newFlow[i]);
   }
 
 }
@@ -99,7 +101,8 @@ void applyFlowRenorm(Surface S, PVector[] flow, float initialVol, float tau) {
   float ratio = (float) Math.pow(initialVol/volAfter, 1.0/3);
 
   for(int i=0; i<S.nV; i++) {
-    S.positions.get(i).mult(ratio);
+    if (!S.boundaryVertices.contains(i))
+      S.positions.get(i).mult(ratio);
   }
 
 }
