@@ -277,7 +277,6 @@ class Surface {
     //      and therefore the shared vertex of faces (j, j+1)
     // P[i-1] is the successor of Q on face j
     // P[i+i] is the predecessor of Q on face (j+1)
-    // Mi is the edge (P[i], Q)
     PVector q, pim1, pi, pip1, Mi, qpi, qpip1, N;
     int prevIdxPrevFace=-1, nextIdxPrevFace=-1, prevIdxCurrFace=-1, nextIdxCurrFace = -1;
     int firstFace=-1, prevFace=-1, currFace=-1;
@@ -554,7 +553,7 @@ class Surface {
     PVector[] smcf = meanCurvatureFlow();
 
     for(int i=0; i<nV; i++) {
-      smcf[i] = smcf[i].mult(smcf[i].mag());
+      smcf[i].mult(smcf[i].mag());
     }
 
     return smcf;

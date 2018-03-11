@@ -18,14 +18,14 @@
 \section*{Introduction}
 The goal of the project was to implement different kind of flows for 3D surfaces
 using the programming framework Processing, and to compare the results obtained
-on multiple surfaces given as PLY files. We have implemented the harmonic flow,
+on multiple surfaces encoded as PLY files. We have implemented the harmonic flow,
 the harmonic flow divided by the area, the mean curvature flow and its squared
 variant. We also made the computations compatible with open surfaces, for
 which the boundary vertices should remain fixed.
 
 \section*{Documentation}
 To implement the interface, we used the Processing library G4P. To install it,
-open the IDE of Processing (tested on v3.3.6), got to the ``Sketch'' menu, click on
+open Processing IDE (tested on v3.3.6), go to the ``Sketch'' menu, click on
 ``Import Library...'', and finally ``Add Library...''. In the window which appears,
 search "g4p" in the field ``Filter'' and install ``G4P'' (tested on v4.1.4 of such library).\\
 
@@ -64,7 +64,7 @@ allowing to modify the following parameters:
   \item the value of ``tau'', a float $0 < \tau \leq 1$ representing the scaling factor applied to the flow;
   \item the PLY file to use, with examples provided in the data directory;
   \item the activity of the flow on the current window,
-    allowing to stop the flow on it even if start flow was pressed in the main menu.
+    allowing to stop the flow on it even if ``Start flow'' was pressed in the main menu.
 \end{itemize}
 
 \begin{figure}[h]
@@ -127,7 +127,8 @@ Let us define the notation used for each vertex:
     and therefore the shared vertex of faces $(j, j+1)$;
   \item $p_{i-1}$ is the successor of $q$ on face $j$;
   \item $p_{i+i}$ is the predecessor of $q$ on face $(j+1)$;
-  \item $\overrightarrow{m_i}$ is the edge ($p_i$, $q$).
+  \item $\overrightarrow{m_i}$ is the cross product of the edge $(p_i, p_{i+1})$
+    by the normal to the plane of $(p_i, q)$ and $(p_{i+1},q)$.
 \end{itemize}
 Then the following steps are applied:
 \begin{itemize}
@@ -138,9 +139,7 @@ Then the following steps are applied:
 \end{itemize}
 \begin{equation*}
   \overrightarrow{MCF_i} = -\frac{1}{2} \sum_{f \in F : q \in f}
-    \frac{\overrightarrow{q p_{i-1}} \times \overrightarrow{q p_{i-1}}}
-      {||\overrightarrow{q p_{i-1}} \times \overrightarrow{q p_{i-1}}||}
-      \times \overrightarrow{p_i p_{i-1}}
+    \overrightarrow{m_i}
 \end{equation*}
 
 \paragraph*{Mean Curvature Flow (cotan version):}
@@ -154,7 +153,8 @@ Let us keep the same notation as for the other version, and introduce:
 \begin{equation*}
   \alpha_A = \widehat{\overrightarrow{p_i p_{i+1}} ~ \overrightarrow{p_{i+1} q}}
 \end{equation*}
-where $B$ stands for ``before'' and $A$ for ``after''. Then:
+where $B$ stands for ``before'' and $A$ for ``after''. $\overrightarrow{m_i}$ in
+this case is the edge $(p_i, q)$. Then:
 \begin{itemize}
   \item find the first incident face $f$ and the predecessor and the successor of $q$ in $f$;
   \item Iterate over the faces in the right order by finding the face containing $q$ and its predecessor;
@@ -188,7 +188,14 @@ For each vertex $p_i$, the flow $F_i$ will be updated to:
 
 \section*{Examples}
 Meaningful examples are given in the form of GIF animations for some of the surfaces.
-They can be found in the gifs directory of the repository.
+They can be found in the gifs directory of the repository. They all use the
+MCF with different values of $\tau$ on different surfaces:
+\begin{itemize}
+  \item a sphere with boundary vertices around a pole, with $\tau = 0.01$;
+  \item a dodecahedron with $\tau = 0.01$;
+  \item a custom surface composed by cubes and half-cubes, with $\tau = 0.01$;
+  \item a mug with $\tau = 0.005$.
+\end{itemize}
 
 \section*{Conclusions}
 The mean curvature flow and its squared variant yield the best results, but
