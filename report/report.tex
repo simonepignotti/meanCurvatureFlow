@@ -112,7 +112,7 @@ For each vertex $p_i$, compute the set of adjacent vertices $N_i$.
 First, calculate the harmonic flow $\overrightarrow{H_i}$ as above, then divide by the area
 calculated in the following way:
 \begin{equation*}
-  A_i = \frac{1}{2} \sum_{j = 1}^{|N_i|} (\overrightarrow{N_i[j] p_i} \times \overrightarrow{N_i[j+1] N_i[j]} )
+  A_i = \frac{1}{2} \sum_{j = 1}^{|N_i|-1} ||\overrightarrow{N_i[0] N_i[j]} \times \overrightarrow{N_i[j] N_i[j+1]}||
 \end{equation*}
 Finally the flow will yield:
 \begin{equation*}
@@ -196,6 +196,28 @@ MCF with different values of $\tau$ on different surfaces:
   \item a custom surface composed by cubes and half-cubes, with $\tau = 0.01$;
   \item a mug with $\tau = 0.005$.
 \end{itemize}
+This is a list of recommended values of $\tau$ for a selection of examples.
+To run the squared variant of the MCF, a generally satisfying practice is
+to divide the recommended value by a factor of 100, while the HF variant divided by the
+area requires a multiplication by 100. While these values work best with
+the projection on the volume constraint, the renormalization versions of all flows
+shall behave correctly with the same values, and only minor adjustments are needed.
+\begin{center}
+  \begin{tabular}{lcc}
+    Filename        & MCF & HF \\
+    \hline
+    boundarySphere.txt  & 0.05 & 0.1 \\
+    sphere10-20.txt     & 0.05 & 0.1 \\
+    icosphereBB.txt     & 0.1 & 0.05 \\
+    dodecahedron.txt    & 0.01 & * \\
+    newsurf.txt         & 0.001 & 0.01 \\
+    mug.txt             & 0.005 & 0.01 \\
+  \end{tabular}
+\end{center}
+In most of the examples, the time scale should be decreased after some time
+to allow the vertices to stabilize their positions. This values can be used
+as reference to launch the flow, but further adjustments are needed in most of
+the cases for optimal performance.
 
 \section*{Conclusions}
 The mean curvature flow and its squared variant yield the best results, but

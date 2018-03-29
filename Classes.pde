@@ -257,12 +257,12 @@ class Surface {
         for(int j=1; j<nA-1; j++) {
           Pj = neighbours.get(j);
           Pjp1 = neighbours.get(j+1);
-          //area of triangle Pi - Pj - Pjp1 = (1/2) * ||Pi-Pj X Pj-Pjp1||
+          //area of triangle Pi - Pj - Pjp1 = (1/2) * ||(Pi Pj) X (Pj Pjp1)||
           tempA = PVector.sub(Pj,Pi).cross(PVector.sub(Pjp1,Pj));
-          A += 0.5*(tempA.mag());
+          A += tempA.mag();
 
         }
-        h.div(A);
+        h.div(0.5*A);
         hf[i] = h.copy();
       }
       else {
