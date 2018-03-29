@@ -22,6 +22,8 @@ GButton editActiveFlow;
 GButton editTau;
 GButton editSurface;
 GButton endEdit;
+GLabel flowName;
+
 
 GTextField flowT;
 GTextField tauT;
@@ -49,6 +51,7 @@ void setup() {
 
   flowT = new GTextField(this, 50, 140, 110, 24);
   tauT  = new GTextField(this, 260, 140, 110, 24);
+  flowName = new GLabel(this, 40, 116, 500, 24);
 
   flowT.setPromptText("new flow value");
   tauT.setPromptText("new tau value");
@@ -61,19 +64,23 @@ void draw() {
 }
 
 // change menu (by changing buttons visibility)
-void buttonsVisibility(boolean menu) {
+void buttonsVisibility(boolean menu) { // true => general // false => bouton
+    // Menu general 
     btnStart.setVisible(menu);
     btnFlow.setVisible(menu);
     for(int i=0;i<nbS;i++) {
         surfaces[i].menuB.setVisible(menu);
     }
 
+    // Menu bouton 
     editFlow.setVisible(!menu);
     editActiveFlow.setVisible(!menu);
     editTau.setVisible(!menu);
     editSurface.setVisible(!menu);
     endEdit.setVisible(!menu);
-
+    
+    flowName.setVisible(!menu);
+    
     flowT.setVisible(!menu);
     tauT.setVisible(!menu);
 
@@ -90,6 +97,7 @@ void refreshFlowButtons() {
             editActiveFlow.setText("Inactive");
         editFlow.setText("Flow type = " + surfaces[editing].flow);
         editTau.setText("Tau factor = " + surfaces[editing].tau);
+        flowName.setText(nameFlow( surfaces[editing].flow));
     }
 }
 

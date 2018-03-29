@@ -200,17 +200,19 @@ class Surface {
   PVector[] harmonicFlow() {
     PVector[] hf = new PVector[nV];
     PVector h = new PVector(0,0,0);
+    PVector pi;
     // number of neighbours
     int n = 0;
 
     for (int i=0; i<nV; i++) {
       if (!boundaryVertices.contains(i)) {
         h.set(0,0,0);
+        pi = positions.get(i);
         n = 0;
         for(int j=0; j<nV; j++) {
           if (adjacency[i][j]) {
             n++;
-            h.add(positions.get(j));
+            h.add(PVector.sub(positions.get(j), pi));
           }
         }
         h.div(n);
@@ -238,6 +240,7 @@ class Surface {
     for(int i=0; i<nV; i++) {
       if(!boundaryVertices.contains(i)) {
         h.set(0,0,0);
+        Pi = positions.get(i);
         neighbours = new ArrayList<PVector>();
         nA = 0;
         // compute the harmonic flow and store the neighbours
@@ -245,7 +248,7 @@ class Surface {
           if (adjacency[i][j]) {
             nA++;
             neighbours.add(positions.get(j));
-            h.add(positions.get(j));
+            h.add(PVector.sub(positions.get(j), Pi));
           }
         }
         h.div(nA);

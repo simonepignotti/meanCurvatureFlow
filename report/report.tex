@@ -52,16 +52,16 @@ allowing to modify the following parameters:
 \begin{itemize}
   \item the flow to apply, encoded by an integer, namely:
   \begin{enumerate}
-    \item mean curvature with volume renormalization;
+    \item mean curvature followed by volume renormalization;
     \item mean curvature with projection on the volume constraints;
-    \item squared mean curvature with volume renormalization;
+    \item squared mean curvature followed by volume renormalization;
     \item squared mean curvature with projection on the volume constraints;
-    \item harmonic with volume renormalization;
+    \item harmonic followed by volume renormalization;
     \item harmonic with projection on the volume constraints;
-    \item harmonic with division by the area and volume renormalization;
+    \item harmonic followed by division by the area and volume renormalization;
     \item harmonic with division by the area and projection on the volume constraints;
   \end{enumerate}
-  \item the value of ``tau'', a float $0 < \tau \leq 1$ representing the scaling factor applied to the flow;
+  \item the value of ``tau'', a float $0 < \tau \leq 1$ representing the time scale applied to the flow;
   \item the PLY file to use, with examples provided in the data directory;
   \item the activity of the flow on the current window,
     allowing to stop the flow on it even if ``Start flow'' was pressed in the main menu.
@@ -101,10 +101,10 @@ In all the following descriptions, the flow for boundary vertices is set to 0.
 
 \paragraph*{Harmonic Flow:}
 For each vertex $p_i$, compute the set of adjacent vertices $N_i$.
-For each $p_j \in N_i$, add $p_j$ to $\overrightarrow{H_i}$, and divide by
+For each $p_j \in N_i$, add $\overrightarrow{p_i p_j}$ to $\overrightarrow{H_i}$, and divide by
 the cardinality of $N_i$.
 \begin{equation*}
-  \overrightarrow{H_i}=\frac{1}{|N_i|} \sum_{p_j \in N_i} \overrightarrow{p_j}
+  \overrightarrow{H_i}=\frac{1}{|N_i|} \sum_{p_j \in N_i} \overrightarrow{p_i p_j}
 \end{equation*}
 
 \paragraph*{Harmonic Area Flow:}
@@ -112,11 +112,11 @@ For each vertex $p_i$, compute the set of adjacent vertices $N_i$.
 First, calculate the harmonic flow $\overrightarrow{H_i}$ as above, then divide by the area
 calculated in the following way:
 \begin{equation*}
-  A_i = \frac{1}{2} \sum_{j = 1}^{|N_i|} (\overrightarrow{N_i[j] P_i} \times \overrightarrow{N_i[j+1] N_i[j]} )
+  A_i = \frac{1}{2} \sum_{j = 1}^{|N_i|} (\overrightarrow{N_i[j] p_i} \times \overrightarrow{N_i[j+1] N_i[j]} )
 \end{equation*}
 Finally the flow will yield:
 \begin{equation*}
-  \overrightarrow{H_i}=\frac{1}{A_i} \left( \frac{1}{|N_i|} \sum_{p_j \in N_i} \overrightarrow{p_j} \right)
+  \overrightarrow{H_i}=\frac{1}{A_i} \left( \frac{1}{|N_i|} \sum_{p_j \in N_i} \overrightarrow{p_i p_j} \right)
 \end{equation*}
 
 \paragraph*{Mean Curvature Flow:}

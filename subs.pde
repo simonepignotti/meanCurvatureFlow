@@ -26,6 +26,38 @@ void drawFace(Surface S, int faceIndex, int theStroke, int theFill, PApplet g) {
   g.endShape();
 }
 
+
+String nameFlow(int flow) {
+  switch(flow) {
+    case 1:
+    case -1:
+      return "meanCurvature | Renorm";
+    case 2:
+    case -2:
+      return "meanCurvature | Proj";
+    case 3:
+    case -3:
+      return "squaredMeanCurvatureFlow | Renorm";
+    case 4:
+    case -4:
+      return "squaredMeanCurvatureFlow | Proj";
+    case 5:
+    case -5:
+      return "harmonicFlow | Renorm";
+    case 6:
+    case -6:
+      return "harmonicFlow | Proj";
+    case 7:
+    case -7:
+      return "harmonicAreaFlow | Renorm";
+    case 8:
+    case -8:
+      return "harmonicAreaFlow | Proj";
+    default:
+      return "No flow";
+  }
+}
+
 // apply a flow to the surface of a given window
 void applyFlow(MyWinData data) {
   Surface S = data.S;
